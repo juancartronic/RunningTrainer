@@ -1,4 +1,4 @@
-# 🏃‍♂️ RunningTrainer
+#  RunningTrainer
 
 **RunningTrainer** es una aplicación web progresiva diseñada para ayudar a corredores de todos los niveles a alcanzar sus objetivos de running mediante planes de entrenamiento estructurados, seguimiento de progreso y un sistema de gamificación con experiencia (XP) y niveles.
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 📋 Tabla de Contenidos
+##  Tabla de Contenidos
 
 - [Características](#-características)
 - [Demo](#-demo)
@@ -27,31 +27,30 @@
 
 ---
 
-## ✨ Características
+##  Características
 
-### 🎯 **Sistema de Autenticación**
+###  **Sistema de Autenticación**
 - Registro e inicio de sesión de usuarios
 - Perfiles personalizados con avatares
 - Persistencia de datos en localStorage
 - Gestión de sesiones activas
-
-### 🏋️ **Planes de Entrenamiento**
+ **Planes de Entrenamiento**
 - **7 planes especializados** adaptados a diferentes objetivos y niveles:
-  - 🏃 Corre 30 Minutos (8 semanas)
-  - 🎯 5K (6 semanas)
-  - 🏅 10K (8 semanas)
-  - ⚡ Fartlek - Cambios de ritmo (6 semanas)
-  - 🔥 HIIT - Alta intensidad (6 semanas)
-  - ⛰️ Trail Running (6 semanas)
-  - 💪 Principiantes con Sobrepeso (6 semanas)
+  -  Corre 30 Minutos (8 semanas)
+  -  5K (6 semanas)
+  -  10K (8 semanas)
+  -  Fartlek - Cambios de ritmo (6 semanas)
+  -  HIIT - Alta intensidad (6 semanas)
+  -  Trail Running (6 semanas)
+  -  Principiantes con Sobrepeso (6 semanas)
 
-### 📊 **Seguimiento de Progreso**
+###  **Seguimiento de Progreso**
 - Barra de progreso visual en tiempo real
 - Gráficos interactivos por semana (Chart.js)
 - Contadores de días completados vs totales
 - Descarga de reportes semanales en PDF
 
-### ⏱️ **Temporizador Inteligente de Intervalos**
+###  **Temporizador Inteligente de Intervalos**
 - **Detección automática de configuración** desde la descripción del entrenamiento
 - Modo pantalla completa con cuenta regresiva circular
 - Identificación de fases: CORRER / CAMINAR
@@ -59,7 +58,7 @@
 - Animación de círculo de progreso SVG
 - Sin necesidad de configuración manual
 
-### 🎮 **Sistema de Gamificación**
+###  **Sistema de Gamificación**
 - **4 niveles de progresión**:
   - 🟦 Principiante (0-300 XP)
   - 🟩 Intermedio (300-800 XP)
@@ -69,18 +68,18 @@
 - Mensajes motivacionales personalizados por nivel
 - Barra de experiencia en tiempo real
 
-### 📱 **Diseño Responsive**
+###  **Diseño Responsive**
 - Compatible con móviles, tablets y escritorio
 - Interfaz moderna con fuente Inter de Google Fonts
 - Animaciones suaves y transiciones elegantes
 - Modo adaptativo para diferentes tamaños de pantalla
 
-### 🔒 **Prevención de Bloqueo de Pantalla**
+###  **Prevención de Bloqueo de Pantalla**
 - Wake Lock API para mantener la pantalla activa durante entrenamientos
 - Feedback háptico en dispositivos móviles
 - Controles táctiles optimizados
 
-### 🎨 **Interfaz de Usuario**
+###  **Interfaz de Usuario**
 - Splash screen animado al inicio
 - Barra de usuario deslizable con scroll
 - Modales elegantes para perfil y temporizador
@@ -89,7 +88,7 @@
 
 ---
 
-## 🎬 Demo
+##  Demo
 
 ### Vista Principal
 La aplicación presenta un dashboard con todos los planes disponibles en tarjetas interactivas.
@@ -109,7 +108,7 @@ Visualiza tu avance con:
 
 ---
 
-## 🛠️ Tecnologías
+##  Tecnologías
 
 ### Frontend
 - **HTML5** - Estructura semántica
@@ -130,7 +129,7 @@ Visualiza tu avance con:
 
 ---
 
-## 📥 Instalación
+##  Instalación
 
 ### Opción 1: Clonar el repositorio
 
@@ -164,7 +163,7 @@ npx http-server
 
 ---
 
-## 🚀 Uso
+##  Uso
 
 ### 1. Registro / Inicio de Sesión
 
@@ -192,7 +191,7 @@ Para cada día de entrenamiento:
 
 1. **Expandir semana**: Haz clic en "Semana X" para ver los días
 2. **Usar Temporizador**: 
-   - Haz clic en "⏱️ Usar Temporizador"
+   - Haz clic en "Usar Temporizador"
    - El temporizador detectará automáticamente:
      - Número de series
      - Tiempo de correr
@@ -225,7 +224,7 @@ Para cada día de entrenamiento:
 
 ---
 
-## 🏃 Planes de Entrenamiento
+##  Planes de Entrenamiento
 
 ### 1. **Corre 30 Minutos** (8 semanas)
 **Objetivo**: Lograr correr 30 minutos continuos  
@@ -292,7 +291,7 @@ Para cada día de entrenamiento:
 
 ---
 
-## 🎯 Sistema de Progresión
+##  Sistema de Progresión
 
 ### Niveles y Requisitos de XP
 
@@ -327,7 +326,7 @@ Ejemplo:
 
 ---
 
-## 📁 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 RunningTrainer/
@@ -372,9 +371,9 @@ RunningTrainer/
 
 ---
 
-## 🔧 Funcionalidades Detalladas
+## Funcionalidades Detalladas
 
-### 🎯 Autenticación y Perfiles
+### Autenticación y Perfiles
 
 ```javascript
 // Estructura de usuario en localStorage
@@ -394,7 +393,7 @@ RunningTrainer/
 }
 ```
 
-### ⏱️ Temporizador Automático
+### Temporizador Automático
 
 **Parser de Entrenamiento**:
 - Detecta patrones como: `"5 Series de 1 min corriendo + 2 min caminando"`
@@ -410,7 +409,7 @@ RunningTrainer/
 - Contador central con formato `m:ss`
 - Alertas sonoras a los 3 segundos finales
 
-### 📊 Sistema de Gráficas
+### Sistema de Gráficas
 
 Usa **Chart.js** para visualizar:
 - Porcentaje de completitud por semana
@@ -424,18 +423,18 @@ Usa **Chart.js** para visualizar:
 - Cálculo basado solo en días entrenables
 - Consistencia en gráfica, perfil y barra de progreso
 
-### 📄 Generación de PDFs
+### Generación de PDFs
 
 ```javascript
 // Características del PDF
 - Encabezado con logo RunningTrainer
 - Título del plan y número de semana
 - Tabla con días, entrenamientos y estados
-- Estados: Completado ✅, Pendiente ❌, Descanso 💤
+- Estados: Completado , Pendiente , Descanso 
 - Formato profesional con jsPDF-AutoTable
 ```
 
-### 🔊 Sistema de Sonidos
+### Sistema de Sonidos
 
 **Generado con Web Audio API**:
 - **Campana (880 Hz)**: Cambio de fase
@@ -446,7 +445,7 @@ Toggle configurable: 🔔 Sonido ON/OFF
 
 ---
 
-## 🤝 Contribuir
+## Contribuir
 
 ¡Las contribuciones son bienvenidas! Aquí te explico cómo puedes ayudar:
 
@@ -486,15 +485,14 @@ git push origin feature/nueva-funcionalidad
 
 ### Ideas para Contribuir
 
-- 🌍 Traducción a otros idiomas
-- 📱 PWA completa con Service Workers
-- ☁️ Backend con base de datos (Firebase, Supabase)
-- 🏆 Sistema de logros y badges
-- 📈 Estadísticas avanzadas (ritmo, VO2max)
-- 🎵 Integración con Spotify
-- ⌚ Conexión con smartwatches
-- 🗺️ Mapas de rutas con GPS
-
+-  Traducción a otros idiomas
+-  PWA completa con Service Workers
+-  Backend con base de datos (Firebase, Supabase)
+-  Sistema de logros y badges
+-  Estadísticas avanzadas (ritmo, VO2max)
+-  Integración con Spotify
+-  Conexión con smartwatches
+-  Mapas de rutas con GPS
 ### Código de Conducta
 
 - Respeto y empatía en todas las interacciones
@@ -503,7 +501,7 @@ git push origin feature/nueva-funcionalidad
 
 ---
 
-## 📜 Licencia
+## Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
@@ -519,7 +517,7 @@ utilizar el Software sin restricción...
 
 ---
 
-## 👤 Contacto
+##  Contacto
 
 **Autor**: Juanka  
 **Proyecto**: RunningTrainer  
@@ -527,13 +525,13 @@ utilizar el Software sin restricción...
 
 ### Enlaces Útiles
 
-- 🐛 [Reportar un Bug](https://github.com/tu-usuario/running-trainer/issues)
-- 💡 [Solicitar Funcionalidad](https://github.com/tu-usuario/running-trainer/issues/new)
-- ⭐ [Dar Estrella al Proyecto](https://github.com/tu-usuario/running-trainer)
+-  [Reportar un Bug](https://github.com/tu-usuario/running-trainer/issues)
+-  [Solicitar Funcionalidad](https://github.com/tu-usuario/running-trainer/issues/new)
+-  [Dar Estrella al Proyecto](https://github.com/tu-usuario/running-trainer)
 
 ---
 
-## 🙏 Agradecimientos
+## Agradecimientos
 
 - **Chart.js** - Por las increíbles gráficas interactivas
 - **jsPDF** - Por la generación de PDFs del lado del cliente
@@ -542,23 +540,23 @@ utilizar el Software sin restricción...
 
 ---
 
-## 📝 Changelog
+##  Changelog
 
 ### v1.0.0 (2026-03-07)
-- ✨ Lanzamiento inicial
-- 🎯 7 planes de entrenamiento completos
-- 👤 Sistema de autenticación
-- 🎮 Sistema de gamificación con XP
-- ⏱️ Temporizador automático con pantalla completa
-- 📊 Gráficas de progreso
-- 📄 Exportación a PDF
-- 📱 Diseño responsive completo
+-  Lanzamiento inicial
+-  7 planes de entrenamiento completos
+-  Sistema de autenticación
+-  Sistema de gamificación con XP
+-  Temporizador automático con pantalla completa
+-  Gráficas de progreso
+-  Exportación a PDF
+-  Diseño responsive completo
 
 ---
 
 <div align="center">
 
-**¡Hecho con ❤️ y muchos kilómetros!**
+**¡Hecho con amor y muchos kilómetros!**
 
 Si este proyecto te ayudó, considera darle una ⭐
 
