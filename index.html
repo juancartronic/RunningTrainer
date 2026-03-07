@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RunningTrainer con Autenticación y Perfiles</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  
+  <div id="splashScreen">
+    <h1 id="splashTitle">RunningTrainer</h1>
+    <div id="loadingCircle"></div>
+  </div>
+
+  <!-- Contenedor de autenticación -->
+  <div id="authContainer" class="auth-container">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="loginTab">Iniciar Sesión</div>
+        <div class="auth-tab" id="registerTab">Registrarse</div>
+      </div>
+      
+      <form id="loginForm" class="auth-form active">
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" required>
+        <input type="password" id="loginPassword" placeholder="Contraseña" required>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Iniciar Sesión</button>
+      </form>
+      
+      <form id="registerForm" class="auth-form">
+        <input type="text" id="registerName" placeholder="Nombre completo" required>
+        <input type="email" id="registerEmail" placeholder="Correo electrónico" required>
+        <input type="password" id="registerPassword" placeholder="Contraseña" required>
+        <div class="profile-level">
+          <span>Nivel:</span>
+          <select id="registerLevel" class="level-badge">
+            <option value="beginner" class="level-beginner">Principiante</option>
+            <option value="intermediate" class="level-intermediate">Intermedio</option>
+            <option value="advanced" class="level-advanced">Avanzado</option>
+            <option value="expert" class="level-expert">Experto</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Cuenta</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Barra de usuario -->
+  <div id="userBar" class="user-bar">
+    <div class="user-info">
+      <div id="userAvatar" class="user-avatar">U</div>
+      <div class="user-details">
+        <span id="userName" class="user-name">Usuario</span>
+        <div class="user-xp-mini">
+          <div class="user-xp-bar" id="userXPBar"></div>
+          <span class="user-xp-text" id="userXPText">0 XP</span>
+        </div>
+      </div>
+      <span id="userLevelBadge" class="user-level level-beginner">Principiante</span>
+    </div>
+    <button id="profileBtn" class="btn btn-sm btn-secondary">Perfil</button>
+    <button id="logoutBtn" class="btn btn-sm btn-danger">Cerrar Sesión</button>
+  </div>
+
+  <!-- Modal de perfil -->
+  <div id="profileModal" class="profile-modal-overlay">
+    <div class="profile-modal-content">
+      <button id="closeProfileModalBtn" class="profile-modal-close">&times;</button>
+      <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Perfil de Usuario</h2>
+      
+      <div class="user-info" style="justify-content: center; margin-bottom: 1.5rem;">
+        <div id="profileAvatar" class="user-avatar" style="width: 60px; height: 60px; font-size: 1.5rem;">U</div>
+        <div>
+          <div id="profileName" class="user-name" style="font-size: 1.3rem;">Usuario</div>
+          <span id="profileLevelBadge" class="user-level level-beginner">Principiante</span>
+        </div>
+      </div>
+      
+      <div class="xp-section">
+        <div class="xp-header">
+          <span class="xp-label">Experiencia (XP)</span>
+          <span class="xp-current" id="profileXP">0 / 300 XP</span>
+        </div>
+        <div class="xp-bar-container">
+          <div class="xp-bar" id="profileXPBar" style="width: 0%"></div>
+        </div>
+        <div class="xp-next-level" id="profileNextLevel">Siguiente nivel: Intermedio</div>
+      </div>
+      
+      <div class="profile-stats">
+        <div class="stat-item">
+          <span>Plan actual:</span>
+          <span id="profilePlan">Plan 30 Minutos</span>
+        </div>
+        <div class="stat-item">
+          <span>Días completados:</span>
+          <span id="profileCompleted">0</span>
+        </div>
+        <div class="stat-item">
+          <span>Total de días:</span>
+          <span id="profileTotal">56</span>
+        </div>
+        <div class="stat-item">
+          <span>Progreso general:</span>
+          <span id="profileProgress">0%</span>
+        </div>
+      </div>
+      
+      <div style="margin-top: 1.5rem;">
+        <button id="changeLevelBtn" class="btn btn-primary" style="width: 100%;">Ver Progreso de Nivel</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div class="container">
+      <div class="header-content">
+        <h1 class="app-title">RunningTrainer</h1>
+        <p class="app-subtitle">Elige tu plan de entrenamiento y empieza a correr</p>
+        <div class="header-badge"><span>🏃‍♂️ Tu compañero de entrenamiento</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="plans-grid">
+      <div class="plan-card" onclick="cambiarPlan('30min')">
+        <div class="plan-circle">
+          <span class="plan-icon">⏱️</span>
+        </div>
+        <h3 class="plan-title">30 Minutos</h3>
+        <p class="plan-description">Corre 30 minutos continuos</p>
+        <div class="plan-badge">8 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="cambiarPlan('5k')">
+        <div class="plan-circle">
+          <span class="plan-icon">🏃</span>
+        </div>
+        <h3 class="plan-title">5K</h3>
+        <p class="plan-description">Completa tus primeros 5km</p>
+        <div class="plan-badge">6 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="cambiarPlan('10k')">
+        <div class="plan-circle">
+          <span class="plan-icon">🏅</span>
+        </div>
+        <h3 class="plan-title">10K</h3>
+        <p class="plan-description">Alcanza los 10 kilómetros</p>
+        <div class="plan-badge">8 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="cambiarPlan('fartlek')">
+        <div class="plan-circle">
+          <span class="plan-icon">⚡</span>
+        </div>
+        <h3 class="plan-title">Fartlek</h3>
+        <p class="plan-description">Cambios de ritmo intensos</p>
+        <div class="plan-badge">6 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="cambiarPlan('hiit')">
+        <div class="plan-circle">
+          <span class="plan-icon">🔥</span>
+        </div>
+        <h3 class="plan-title">HIIT</h3>
+        <p class="plan-description">Intervalos de alta intensidad</p>
+        <div class="plan-badge">6 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="cambiarPlan('trail')">
+        <div class="plan-circle">
+          <span class="plan-icon">⛰️</span>
+        </div>
+        <h3 class="plan-title">Trail Running</h3>
+        <p class="plan-description">Corre por montaña</p>
+        <div class="plan-badge">6 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="cambiarPlan('sobrepeso')">
+        <div class="plan-circle">
+          <span class="plan-icon">💪</span>
+        </div>
+        <h3 class="plan-title">Principiantes</h3>
+        <p class="plan-description">Empieza desde cero</p>
+        <div class="plan-badge">6 semanas</div>
+      </div>
+    </div>
+    <h2 class="section-title" id="planTitle"></h2>
+    <div id="motivationalMessage" class="motivational-card low"></div>
+    <div class="progress-container">
+      <progress id="progressBar" value="0" max="100"></progress>
+      <div class="progress-labels">
+        <span>Inicio</span>
+        <span id="progressText" class="progress-text">0% completado</span>
+        <span>Meta</span>
+      </div>
+    </div>
+    <div id="weeksDefaultAnchor"></div>
+    <div id="weeks"></div>
+    <div class="chart-container">
+      <canvas id="progressChart" width="400" height="200"></canvas>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <div class="container">
+      <div class="footer-copyright">
+        © 2025 RunningTrainer. Todos los derechos reservados.
+      </div>
+    </div>
+  </footer>
+
+  <div id="timerModal" class="timer-modal-overlay">
+    <div class="timer-modal-content">
+      <button id="closeTimerModalBtn" class="timer-modal-close" aria-label="Cerrar modal">&times;</button>
+      <div class="timer-top">
+        <h2 class="section-title timer-title">Temporizador del Día</h2>
+        <p id="timerWorkoutTitle" class="timer-workout-title">Entrenamiento automático</p>
+        <p class="timer-reps">Serie: <span id="currentRep">0</span> / <span id="totalReps">0</span></p>
+        <p id="timerLabel" class="timer-state">Listo</p>
+      </div>
+
+      <div class="timer-visual">
+        <svg class="timer-ring" viewBox="0 0 220 220" aria-hidden="true">
+          <circle class="timer-ring-bg" cx="110" cy="110" r="96"></circle>
+          <circle id="timerRingProgress" class="timer-ring-progress" cx="110" cy="110" r="96"></circle>
+        </svg>
+        <div class="timer-countdown-center">
+          <div id="countdown" class="timer-countdown">00</div>
+          <p id="timerPhaseHint" class="timer-phase-hint">Esperando inicio</p>
+        </div>
+      </div>
+
+      <div class="timer-actions">
+        <button id="startBtn" class="btn btn-success">Iniciar</button>
+        <button id="pauseBtn" class="btn btn-warning">Pausar</button>
+        <button id="resetBtn" class="btn btn-danger">Reiniciar</button>
+      </div>
+
+      <div class="sound-controls">
+        <div class="sound-toggle active" id="soundToggle">
+          <span>🔔 Sonido: ON</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
