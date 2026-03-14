@@ -29,6 +29,8 @@ Objeto que contiene todos los usuarios registrados, indexados por email:
     password: String,       // Contraseña (⚠️ almacenada en texto plano - solo para demo)
     level: String,          // Nivel: "beginner" | "intermediate" | "advanced" | "expert"
     xp: Number,            // Puntos de experiencia acumulados
+    pace5k: Number,        // (Opcional) Mejor tiempo 5K en segundos para plan 20K
+    pace10k: Number,       // (Opcional) Mejor tiempo 10K en segundos para plan Maratón
     progressData: Object,   // Datos de progreso por plan (ver abajo)
     createdAt: String      // ISO timestamp de creación
   },
@@ -47,6 +49,8 @@ Objeto que contiene todos los usuarios registrados, indexados por email:
     password: "mipassword123",
     level: "intermediate",
     xp: 475,
+    pace5k: 1530,
+    pace10k: 3120,
     progressData: {
       "30min": {
         "semana0": [true, true, false, true, false, false, false],
@@ -81,7 +85,9 @@ progressData: {
   "fartlek": {...},    // Plan Fartlek
   "hiit": {...},       // Plan HIIT
   "trail": {...},      // Plan Trail
-  "sobrepeso": {...}   // Plan Principiantes
+  "sobrepeso": {...},  // Plan Principiantes
+  "20k": {...},        // Plan 20K personalizado (generado dinámicamente)
+  "maraton": {...}     // Plan Maratón personalizado (generado dinámicamente)
 }
 ```
 
@@ -151,7 +157,9 @@ const XP_POR_PLAN = {
   'fartlek': 25,      // Avanzado
   '10k': 30,          // Avanzado+
   'trail': 35,        // Experto
-  'hiit': 40          // Experto intenso
+  'hiit': 40,         // Experto intenso
+  '20k': 50,          // Plan 20K personalizado
+  'maraton': 65       // Plan Maratón 42K personalizado
 };
 ```
 
@@ -197,6 +205,9 @@ const planes = {
   "5k": [...],
   // ... otros planes
 }
+
+// Nota: los planes "20k" y "maraton" se generan dinámicamente en app.js
+// a partir de los ritmos ingresados por el usuario.
 ```
 
 ### Estructura de Día
@@ -449,4 +460,4 @@ function restoreData(jsonString) {
 
 ---
 
-Este documento refleja el estado actual de la estructura de datos de RunningTrainer v1.0.0
+Este documento refleja el estado actual de la estructura de datos de RunningTrainer v1.1.0

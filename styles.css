@@ -1548,3 +1548,13 @@ progress::-webkit-progress-value {
   background: #e2e8f0;
   color: #475569;
 }
+/* ========================================
+   PLAN 20K - ESTILOS
+   ======================================== */
+.pace-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  color: var(--text-primary);
+}

@@ -5,6 +5,43 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.1.0] - 2026-03-14
+
+### ✨ Agregado
+
+#### Nuevos Planes Personalizados
+- **Plan 20K personalizado (8 semanas)** con generación dinámica según marca de 5K
+- **Plan Maratón 42K personalizado (16 semanas)** con generación dinámica según marca de 10K
+- Modales de configuración con validación de tiempo en formato `mm:ss`
+- Vista previa de ritmos antes de generar cada plan
+
+#### Cálculo de Ritmos
+- Conversión y validación de tiempos (`mm:ss` ↔ segundos)
+- Estimación de ritmos por zona con fórmula de Riegel
+- Cálculo de tiempo objetivo estimado para 20K y Maratón
+
+### 🔄 Cambiado
+
+#### Sistema de XP y Progresión
+- Nuevo valor XP para plan **20K**: `50 XP/día`
+- Nuevo valor XP para plan **Maratón**: `65 XP/día`
+- Actualización de recomendaciones de planes con mayor XP en el perfil
+
+#### Sistema de Insignias
+- Nueva insignia `plan-20k` (Medio Maratoniano)
+- Nueva insignia `plan-maraton` (Maratoniano)
+- Requisito de `todos-planes` actualizado de 6 a 8 planes completados
+
+#### Interfaz
+- Se agregan dos nuevas tarjetas de plan: **20K** y **Maratón**
+- Se añaden estilos reutilizables para filas de ritmo (`.pace-row`)
+
+### 🛠 Técnico
+
+- Integración de generación dinámica de planes personalizados en `app.js`
+- Persistencia de marcas de referencia por usuario (`pace5k`, `pace10k`)
+- Reinicio de progreso del plan personalizado al regenerarlo
+
 ## [1.0.0] - 2026-03-07
 
 ### 🎉 Lanzamiento Inicial
@@ -154,4 +191,5 @@ Primer lanzamiento público de RunningTrainer con todas las funcionalidades core
 ---
 
 [1.0.0]: https://github.com/tu-usuario/running-trainer/releases/tag/v1.0.0
-[Unreleased]: https://github.com/tu-usuario/running-trainer/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/tu-usuario/running-trainer/releases/tag/v1.1.0
+[Unreleased]: https://github.com/tu-usuario/running-trainer/compare/v1.1.0...HEAD

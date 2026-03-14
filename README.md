@@ -2,7 +2,7 @@
 
 **RunningTrainer** es una aplicación web progresiva diseñada para ayudar a corredores de todos los niveles a alcanzar sus objetivos de running mediante planes de entrenamiento estructurados, seguimiento de progreso y un sistema de gamificación con experiencia (XP) y niveles.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
@@ -34,8 +34,8 @@
 - Perfiles personalizados con avatares
 - Persistencia de datos en localStorage
 - Gestión de sesiones activas
- **Planes de Entrenamiento**
-- **7 planes especializados** adaptados a diferentes objetivos y niveles:
+###  **Planes de Entrenamiento**
+- **9 planes especializados** adaptados a diferentes objetivos y niveles:
   -  Corre 30 Minutos (8 semanas)
   -  5K (6 semanas)
   -  10K (8 semanas)
@@ -43,6 +43,10 @@
   -  HIIT - Alta intensidad (6 semanas)
   -  Trail Running (6 semanas)
   -  Principiantes con Sobrepeso (6 semanas)
+  -  20K Personalizado (8 semanas)
+  -  Maratón 42K Personalizado (16 semanas)
+- Cálculo automático de ritmos personalizados para 20K (desde marca 5K)
+- Cálculo automático de ritmos personalizados para Maratón (desde marca 10K)
 
 ###  **Seguimiento de Progreso**
 - Barra de progreso visual en tiempo real
@@ -181,7 +185,7 @@ Al abrir la aplicación por primera vez:
 
 ### 2. Seleccionar Plan de Entrenamiento
 
-- Haz clic en cualquiera de las 7 tarjetas de planes
+- Haz clic en cualquiera de las 9 tarjetas de planes
 - El plan se marcará como activo
 - Se mostrará el calendario semanal completo
 
@@ -289,6 +293,24 @@ Para cada día de entrenamiento:
 - Progresión muy gradual
 - Prevención de lesiones
 
+### 8. **20K Personalizado** (8 semanas)
+**Objetivo**: Preparar una carrera de 20 kilómetros con ritmos individualizados  
+**Nivel**: Intermedio-Avanzado  
+**XP por día**: 50
+
+- Se genera a partir de tu mejor tiempo en 5K
+- Calcula ritmos Z2, Z3 y ritmo objetivo 20K
+- Incluye semanas de base, calidad, pico y taper
+
+### 9. **Maratón 42K Personalizado** (16 semanas)
+**Objetivo**: Preparar un maratón completo con planificación por bloques  
+**Nivel**: Avanzado-Experto  
+**XP por día**: 65
+
+- Se genera a partir de tu mejor tiempo en 10K
+- Calcula ritmos Z2, Z3, tempo y ritmo maratón
+- Estructura de 16 semanas: base, calidad, pico y taper
+
 ---
 
 ##  Sistema de Progresión
@@ -306,7 +328,9 @@ Para cada día de entrenamiento:
 
 Los planes más exigentes otorgan más XP:
 
-- **HIIT**: 40 XP/día (plan más intenso)
+- **Maratón 42K**: 65 XP/día (plan de mayor carga)
+- **20K**: 50 XP/día
+- **HIIT**: 40 XP/día
 - **Trail**: 35 XP/día
 - **10K**: 30 XP/día
 - **Fartlek**: 25 XP/día
@@ -367,7 +391,13 @@ RunningTrainer/
 #### `data.js`
 - Objeto `planes` con todos los entrenamientos
 - Estructura: `plan -> semanas -> [día, descripción]`
-- 7 planes completos con 6-8 semanas cada uno
+- 7 planes base estáticos con 6-8 semanas cada uno
+
+#### `app.js` (planes personalizados)
+- Generación dinámica de plan **20K** según marca en 5K
+- Generación dinámica de plan **Maratón 42K** según marca en 10K
+- Cálculo de ritmos con fórmula de Riegel
+- Persistencia de ritmos personalizados por usuario
 
 ---
 
@@ -383,10 +413,15 @@ RunningTrainer/
   password: "***",
   level: "beginner",
   xp: 150,
+  pace5k: 1530,
+  pace10k: 3120,
   progressData: {
     "30min": {
       "semana0": [false, true, false, ...],
       "semana1": [true, true, false, ...]
+    },
+    "20k": {
+      "semana0": [false, false, false, ...]
     }
   },
   createdAt: "2026-03-07T..."
@@ -442,6 +477,13 @@ Usa **Chart.js** para visualizar:
 - **Alerta (880 Hz)**: 3 segundos restantes
 
 Toggle configurable: 🔔 Sonido ON/OFF
+
+### Planes Personalizados por Ritmo
+
+- El plan **20K** se genera tras introducir un tiempo de referencia de 5K en formato `mm:ss`.
+- El plan **Maratón** se genera tras introducir un tiempo de referencia de 10K en formato `mm:ss`.
+- Ambos planes muestran una vista previa de ritmos antes de generar el calendario completo.
+- Los ritmos quedan guardados por usuario para reutilizarlos en futuras sesiones.
 
 ---
 
@@ -541,6 +583,11 @@ utilizar el Software sin restricción...
 ---
 
 ##  Changelog
+
+### v1.1.0 (2026-03-14)
+-  Nuevos planes personalizados: 20K (8 semanas) y Maratón 42K (16 semanas)
+-  Cálculo automático de ritmos por marca 5K/10K
+-  Ajuste de recompensas y badges para los nuevos planes
 
 ### v1.0.0 (2026-03-07)
 -  Lanzamiento inicial

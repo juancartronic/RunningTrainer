@@ -202,6 +202,24 @@
         <p class="plan-description">Empieza desde cero</p>
         <div class="plan-badge">6 semanas</div>
       </div>
+
+      <div class="plan-card" onclick="iniciar20K()">
+        <div class="plan-circle">
+          <span class="plan-icon">🎯</span>
+        </div>
+        <h3 class="plan-title">20K</h3>
+        <p class="plan-description">Plan personalizado según tu ritmo</p>
+        <div class="plan-badge">8 semanas</div>
+      </div>
+
+      <div class="plan-card" onclick="iniciarMaraton()">
+        <div class="plan-circle">
+          <span class="plan-icon">🏆</span>
+        </div>
+        <h3 class="plan-title">Maratón</h3>
+        <p class="plan-description">42K — Plan por bloques con tus ritmos</p>
+        <div class="plan-badge">16 semanas</div>
+      </div>
     </div>
     <h2 class="section-title" id="planTitle"></h2>
     <div id="motivationalMessage" class="motivational-card low"></div>
@@ -270,6 +288,73 @@
         <button type="button" class="sound-option" data-sound="off">Silencio</button>
         <div id="soundStatus" class="sound-status" aria-live="polite"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal de configuración Maratón -->
+  <div id="modalMaraton" class="profile-modal-overlay">
+    <div class="profile-modal-content" style="max-width: 440px;">
+      <button id="closeModalMaratonBtn" class="profile-modal-close">&times;</button>
+      <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0.5rem;">🏆 Plan Maratón Personalizado</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Introduce tu mejor tiempo en 10K y calcularemos todos tus ritmos para los 42 km.
+      </p>
+
+      <div style="margin-bottom: 1.2rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.4rem; color:var(--text-primary);">⏱️ Tiempo en 10K (mm:ss)</label>
+        <input type="text" id="pace10kInput" placeholder="Ej: 50:00" maxlength="5"
+          style="width:100%; padding:0.7rem 1rem; border-radius:10px; border:1.5px solid var(--border-color);
+                 background:var(--card-background); color:var(--text-primary); font-size:1.1rem; text-align:center; box-sizing:border-box;">
+        <p id="pace10kError" style="color:#ef4444; font-size:0.82rem; margin-top:0.3rem; display:none;">Formato inválido. Usa mm:ss (ej: 50:00)</p>
+      </div>
+
+      <div id="paceSummaryMaraton" style="display:none; background:var(--background-secondary); border-radius:12px; padding:1rem; margin-bottom:1.2rem; font-size:0.88rem;">
+        <div style="font-weight:700; margin-bottom:0.7rem; color:var(--text-primary);">📊 Tus ritmos para el maratón</div>
+        <div class="pace-row"><span>🟢 Suave Z2</span><span id="mPaceEasy" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🟡 Medio Z3</span><span id="mPaceMedium" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🔵 Tempo</span><span id="mPaceTempo" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🔴 Ritmo Maratón (RM)</span><span id="mPaceTarget" style="font-weight:600; color:#3b82f6;"></span></div>
+        <div class="pace-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border-color);">
+          <span>🏁 Tiempo estimado maratón</span><span id="mTime42k" style="font-weight:700; color:#3b82f6;"></span>
+        </div>
+      </div>
+
+      <button id="generateMaratonBtn" class="btn btn-primary" style="width:100%; padding:0.8rem;" type="button">
+        🚀 Generar mi plan Maratón
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de configuración 20K -->
+  <div id="modal20K" class="profile-modal-overlay">
+    <div class="profile-modal-content" style="max-width: 420px;">
+      <button id="closeModal20KBtn" class="profile-modal-close">&times;</button>
+      <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0.5rem;">🎯 Plan 20K Personalizado</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Introduce tu mejor tiempo en 5K y calcularemos tus ritmos objetivo para el 20K.
+      </p>
+
+      <div style="margin-bottom: 1.2rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.4rem; color:var(--text-primary);">⏱️ Tiempo en 5K (mm:ss)</label>
+        <input type="text" id="pace5kInput" placeholder="Ej: 25:30" maxlength="5"
+          style="width:100%; padding:0.7rem 1rem; border-radius:10px; border:1.5px solid var(--border-color);
+                 background:var(--card-background); color:var(--text-primary); font-size:1.1rem; text-align:center; box-sizing:border-box;">
+        <p id="pace5kError" style="color:#ef4444; font-size:0.82rem; margin-top:0.3rem; display:none;">Formato inválido. Usa mm:ss (ej: 25:30)</p>
+      </div>
+
+      <div id="paceSummary" style="display:none; background:var(--background-secondary); border-radius:12px; padding:1rem; margin-bottom:1.2rem; font-size:0.88rem;">
+        <div style="font-weight:700; margin-bottom:0.6rem; color:var(--text-primary);">📊 Tus ritmos estimados</div>
+        <div class="pace-row"><span>🟢 Ritmo suave (Z2)</span><span id="paceEasy" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🟡 Ritmo medio (Z3)</span><span id="paceMedium" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🔴 Ritmo objetivo 20K</span><span id="paceTarget" style="font-weight:600; color:#3b82f6;"></span></div>
+        <div class="pace-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border-color);">
+          <span>🏁 Tiempo estimado 20K</span><span id="time20k" style="font-weight:700; color:#3b82f6;"></span>
+        </div>
+      </div>
+
+      <button id="generate20KBtn" class="btn btn-primary" style="width:100%; padding:0.8rem;" type="button">
+        🚀 Generar mi plan 20K
+      </button>
     </div>
   </div>
 
