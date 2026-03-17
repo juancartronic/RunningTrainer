@@ -304,6 +304,25 @@ body.dark-mode .user-bar {
   position: relative;
   transform: scale(0.95);
   transition: transform 0.3s ease;
+  color: #0f172a;
+}
+
+/* En modo noche, sobreescribir vars CSS solo dentro del modal para que
+   los estilos inline (color:var(--text-primary) etc.) también sean negros */
+body.dark-mode .profile-modal-content {
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --card-background: #f1f5f9;
+  --background-secondary: #f1f5f9;
+}
+
+/* Input dentro del modal: fondo claro y texto negro */
+body.dark-mode .profile-modal-content input[type="text"],
+body.dark-mode .profile-modal-content input[type="email"],
+body.dark-mode .profile-modal-content input[type="password"] {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
 }
 
 .profile-modal-overlay.active .profile-modal-content {
@@ -922,6 +941,11 @@ body.dark-mode .sound-option {
   color: var(--primary);
 }
 
+body.dark-mode .timer-modal-content .timer-countdown,
+body.dark-mode .timer-modal-content .sound-status {
+  color: #000;
+}
+
 .dark-mode-toggle {
   padding: 10px 14px;
   border-radius: 8px;
@@ -1149,9 +1173,13 @@ body.dark-mode .plan-card {
 .plan-title {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--dark);
+  color: #0f172a;
   margin: 10px 0;
   letter-spacing: -0.02em;
+}
+
+body.dark-mode .plan-title {
+  color: #ffffff;
 }
 
 .plan-description {
@@ -1177,6 +1205,18 @@ body.dark-mode .plan-card {
   border-color: var(--success);
   background: linear-gradient(135deg, #f0fdf4, #dcfce7);
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+}
+
+.plan-card.active .plan-title {
+  color: #0f172a;
+}
+
+body.dark-mode .plan-card.active {
+  background: linear-gradient(135deg, #052e16, #14532d);
+}
+
+body.dark-mode .plan-card.active .plan-title {
+  color: #ffffff;
 }
 
 .plan-card.active::after {

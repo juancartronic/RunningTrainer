@@ -5,7 +5,10 @@ let users = JSON.parse(localStorage.getItem("runningTrainerUsers")) || {};
 let currentUser = null;
 let planActual = "30min";
 let chart;
-let darkMode = localStorage.getItem('darkMode') === 'true';
+const _savedDarkMode = localStorage.getItem('darkMode');
+let darkMode = _savedDarkMode !== null
+  ? _savedDarkMode === 'true'
+  : window.matchMedia('(prefers-color-scheme: dark)').matches;
 let soundMode = localStorage.getItem('soundMode') || 'on'; // 'on', 'success', 'motivation', 'off'
 let sharedAudioContext = null;
 
@@ -327,10 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const splashTitle = document.getElementById('splashTitle');
   const loadingCircle = document.getElementById('loadingCircle');
   
-  // Aplicar tema oscuro si está guardado
-  if (darkMode) {
-    applyDarkMode();
-  }
+  // Aplicar tema siempre al arrancar (oscuro o claro)
+  applyDarkMode();
   
   // Verificar autenticación primero
   const isAuthenticated = checkAuthStatus();
@@ -527,8 +528,10 @@ function toggleDarkMode() {
 function applyDarkMode() {
   if (darkMode) {
     document.body.classList.add('dark-mode');
+    document.body.classList.remove('light-mode');
   } else {
     document.body.classList.remove('dark-mode');
+    document.body.classList.add('light-mode');
   }
 
   if (darkModeToggle) {
