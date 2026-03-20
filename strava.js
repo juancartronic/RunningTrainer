@@ -5,7 +5,7 @@
 const STRAVA = {
 
   // ─── CONFIGURACIÓN ────────────────────────────────────────────────────────
-  CLIENT_ID: 'TU_CLIENT_ID_AQUI', // 👈 Cámbialo por tu Client ID de Strava
+  CLIENT_ID: '213935', // 👈 Cámbialo por tu Client ID de Strava
 
   get REDIRECT_URI() {
     return window.location.origin + '/callback.html';
