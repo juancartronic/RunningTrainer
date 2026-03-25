@@ -1,5 +1,16 @@
 {
-  "rewrites": [
-    { "source": "/callback", "destination": "/callback.html" }
+  "version": 2,
+  "builds": [
+    { "src": "api/strava-token.js", "use": "@vercel/node" },
+    { "src": "api/test.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/strava-token", "dest": "/api/strava-token.js" },
+    { "src": "/api/test", "dest": "/api/test.js" },
+    { "src": "/callback", "dest": "/callback.html" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
