@@ -68,3 +68,5 @@ coverage/
 *.user
 *.userosscache
 *.sln.docstates
+.vercel
+.env*.local
