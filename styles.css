@@ -1823,3 +1823,94 @@ progress::-webkit-progress-value {
   .strava-header     { padding: 0.75rem 1rem; }
   .strava-section    { padding: 0.9rem 1rem; }
 }
+
+/* ─── STRAVA UPLOAD MODAL ──────────────────────────────────────────────── */
+.strava-upload-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000;
+  opacity: 0; transition: opacity 0.3s ease;
+  padding: 1rem;
+}
+.strava-upload-overlay.active { opacity: 1; }
+
+.strava-upload-modal {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+  transform: translateY(20px); transition: transform 0.3s ease;
+}
+.strava-upload-overlay.active .strava-upload-modal { transform: translateY(0); }
+
+.strava-upload-header {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #FC4C02, #e8430a);
+  color: #fff; font-weight: 700; font-size: 1rem;
+}
+.strava-upload-header svg { flex-shrink: 0; }
+.strava-upload-header span { flex: 1; }
+.strava-upload-close {
+  background: none; border: none; color: #fff;
+  font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1;
+  opacity: 0.8; transition: opacity 0.2s;
+}
+.strava-upload-close:hover { opacity: 1; }
+
+.strava-upload-body { padding: 1.25rem; }
+
+.strava-upload-plan {
+  background: var(--bg-primary);
+  border-radius: 8px; padding: 0.75rem;
+  font-size: 0.85rem; color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  border-left: 3px solid #FC4C02;
+}
+.strava-upload-source {
+  font-size: 0.78rem; color: var(--text-secondary);
+  margin-bottom: 1rem; text-align: center;
+  padding: 0.4rem; background: var(--bg-primary); border-radius: 6px;
+}
+
+.strava-upload-field { margin-bottom: 0.85rem; }
+.strava-upload-field label {
+  display: block; font-size: 0.78rem; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 0.3rem;
+}
+.strava-upload-field input {
+  width: 100%; padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px; font-size: 0.9rem;
+  background: var(--bg-primary); color: var(--text-primary);
+  transition: border-color 0.2s;
+}
+.strava-upload-field input:focus {
+  outline: none; border-color: #FC4C02;
+  box-shadow: 0 0 0 3px rgba(252,76,2,0.15);
+}
+.strava-upload-field input[readonly] {
+  opacity: 0.7; cursor: not-allowed;
+}
+
+.strava-upload-actions {
+  display: flex; gap: 0.75rem; margin-top: 1.25rem;
+}
+.strava-upload-actions .btn { flex: 1; padding: 0.7rem; font-size: 0.9rem; border-radius: 10px; }
+.btn-strava {
+  background: linear-gradient(135deg, #FC4C02, #e8430a);
+  color: #fff; border: none; font-weight: 700;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-strava:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(252,76,2,0.3); }
+.btn-strava:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.strava-upload-status {
+  text-align: center; font-size: 0.82rem;
+  margin-top: 0.75rem; padding: 0.4rem;
+  border-radius: 6px; min-height: 1.5rem;
+}
+.strava-upload-status.success { color: #10b981; background: rgba(16,185,129,0.1); }
+.strava-upload-status.error { color: #ef4444; background: rgba(239,68,68,0.1); }

@@ -11,10 +11,20 @@ const STRAVA = {
     return window.location.origin + '/callback.html';
   },
 
-  SCOPE:          'activity:read_all',
+  SCOPE:          'activity:read_all,activity:write',
   API_BASE:       'https://www.strava.com/api/v3',
   TOKEN_ENDPOINT: '/api/strava-token',
   CACHE_TTL:      15 * 60 * 1000,
+
+  // Si defines window.RUNNING_TRAINER_CONFIG.apiBaseUrl, la app usa ese backend.
+  // En Android debe apuntar a tu dominio desplegado (ej: https://tu-app.vercel.app).
+  get API_BASE_URL() {
+    const configured = window.RUNNING_TRAINER_CONFIG?.apiBaseUrl || '';
+    return configured.trim().replace(/\/$/, '');
+  },
+  getTokenEndpoint() {
+    return this.API_BASE_URL ? this.API_BASE_URL + this.TOKEN_ENDPOINT : this.TOKEN_ENDPOINT;
+  },
 
   _accessToken: null, _refreshToken: null, _expiresAt: null,
   _athlete: null, _activities: [],
@@ -55,7 +65,8 @@ const STRAVA = {
 
   async handleCallback(code) {
     try {
-      const res  = await fetch(this.TOKEN_ENDPOINT + '?code=' + encodeURIComponent(code));
+      const tokenEndpoint = this.getTokenEndpoint();
+      const res  = await fetch(tokenEndpoint + '?code=' + encodeURIComponent(code));
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       this._accessToken = data.access_token; this._refreshToken = data.refresh_token;
@@ -68,7 +79,8 @@ const STRAVA = {
     if (!this._refreshToken) return false;
     if (this._expiresAt && this._expiresAt > Math.floor(Date.now()/1000) + 300) return true;
     try {
-      const res  = await fetch(this.TOKEN_ENDPOINT, {
+      const tokenEndpoint = this.getTokenEndpoint();
+      const res  = await fetch(tokenEndpoint, {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({refresh_token: this._refreshToken}),
       });
@@ -265,6 +277,204 @@ const STRAVA = {
         if (window.showToast) showToast('Cuenta de Strava desconectada', 'success');
       }
     });
+  },
+
+  // ─── CREAR ACTIVIDAD EN STRAVA ──────────────────────────────────────────
+  async createActivity({ name, elapsedTime, distance, description, sportType }) {
+    if (!await this.refreshIfNeeded()) return null;
+    try {
+      const body = {
+        name: name || 'RunningTrainer Workout',
+        type: 'Run',
+        sport_type: sportType || 'Run',
+        start_date_local: new Date().toISOString(),
+        elapsed_time: Math.round(elapsedTime),
+        description: description || '',
+      };
+      if (distance && distance > 0) body.distance = distance;
+
+      const res = await fetch(this.API_BASE + '/activities', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + this._accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'HTTP ' + res.status);
+      }
+      const data = await res.json();
+      // Invalidar caché para que el widget muestre la nueva actividad
+      localStorage.removeItem('strava_cache');
+      return data;
+    } catch (e) {
+      console.error('[Strava] createActivity error', e);
+      return null;
+    }
+  },
+
+  // ─── PARSEAR DATOS DEL PLAN ───────────────────────────────────────────────
+  parsePlanData(planText) {
+    const text = (planText || '').toLowerCase();
+    let totalSeconds = 0;
+    let distanceKm = 0;
+
+    // Extraer km: "5 km", "3.5 km"
+    const kmMatches = [...text.matchAll(/(\d+(?:[.,]\d+)?)\s*km/gi)];
+    if (kmMatches.length) {
+      distanceKm = kmMatches.reduce((sum, m) => sum + parseFloat(m[1].replace(',', '.')), 0);
+    }
+
+    // Extraer minutos/segundos: "30 min", "1.5 min", "30 seg"
+    const timeMatches = [...text.matchAll(/(\d+(?:[.,]\d+)?)\s*(min(?:uto)?s?|seg(?:undo)?s?)/gi)];
+    const seconds = timeMatches.map(m => {
+      const val = parseFloat(m[1].replace(',', '.'));
+      return m[2].toLowerCase().startsWith('min') ? val * 60 : val;
+    });
+
+    // Si hay series: "5 Series de 1 min corriendo + 2 min caminando" → 5 * (60 + 120)
+    const seriesMatch = text.match(/(\d+)\s*series?/i);
+    if (seriesMatch && seconds.length) {
+      const reps = parseInt(seriesMatch[1], 10);
+      const perRep = seconds.reduce((a, b) => a + b, 0);
+      totalSeconds = reps * perRep;
+    } else if (seconds.length) {
+      totalSeconds = seconds.reduce((a, b) => a + b, 0);
+    }
+
+    return { totalSeconds, distanceMeters: distanceKm * 1000 };
+  },
+
+  getSportTypeForPlan(planType) {
+    return planType === 'trail' ? 'TrailRun' : 'Run';
+  },
+
+  // ─── MODAL SUBIR A STRAVA ─────────────────────────────────────────────────
+  showUploadModal({ planText, planType, weekIndex, dayIndex, timerSeconds }) {
+    if (!this.isConnected()) return;
+
+    const parsed = this.parsePlanData(planText);
+    const sportType = this.getSportTypeForPlan(planType);
+
+    // Prioridad para elapsed_time: A) temporizador real, B) parseado del plan, C) vacío (pedir)
+    let estimatedTime = timerSeconds || parsed.totalSeconds || 0;
+    let estimatedDist = parsed.distanceMeters || 0;
+    const hasTimerData = !!timerSeconds;
+    const hasParsedTime = parsed.totalSeconds > 0;
+    const needsForm = !hasTimerData && !hasParsedTime;
+
+    // Formatear tiempo para mostrar
+    const fmtTime = (s) => {
+      if (!s) return '';
+      const m = Math.floor(s / 60), sec = Math.round(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    };
+
+    const sourceLabel = hasTimerData ? '⏱️ Temporizador'
+      : hasParsedTime ? '📋 Estimado del plan'
+      : '✏️ Introduce tus datos';
+
+    // Eliminar modal anterior si existe
+    document.getElementById('stravaUploadModal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'stravaUploadModal';
+    modal.className = 'strava-upload-overlay';
+    modal.innerHTML = `
+      <div class="strava-upload-modal">
+        <div class="strava-upload-header">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#FC4C02">
+            <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/>
+          </svg>
+          <span>Subir a Strava</span>
+          <button class="strava-upload-close" id="stravaUploadClose">&times;</button>
+        </div>
+        <div class="strava-upload-body">
+          <div class="strava-upload-plan"><strong>Entrenamiento:</strong> ${planText}</div>
+          <div class="strava-upload-source">${sourceLabel}</div>
+          <div class="strava-upload-field">
+            <label>Tiempo (min:seg)</label>
+            <input type="text" id="stravaUploadTime" value="${fmtTime(estimatedTime)}" 
+                   placeholder="ej: 30:00" ${hasTimerData ? 'readonly' : ''}>
+          </div>
+          <div class="strava-upload-field">
+            <label>Distancia (km)</label>
+            <input type="text" id="stravaUploadDist" value="${estimatedDist > 0 ? (estimatedDist / 1000).toFixed(2) : ''}" 
+                   placeholder="ej: 5.0 (opcional)">
+          </div>
+          <div class="strava-upload-field">
+            <label>Nombre actividad</label>
+            <input type="text" id="stravaUploadName" value="RunningTrainer: ${planText}" maxlength="100">
+          </div>
+          <div class="strava-upload-actions">
+            <button class="btn btn-secondary" id="stravaUploadCancel">Cancelar</button>
+            <button class="btn btn-strava" id="stravaUploadConfirm">🚀 Subir a Strava</button>
+          </div>
+          <div class="strava-upload-status" id="stravaUploadStatus"></div>
+        </div>
+      </div>`;
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add('active'));
+
+    // Parsear time input "mm:ss" → seconds
+    const parseTimeInput = (val) => {
+      const parts = val.trim().split(':');
+      if (parts.length === 2) return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+      if (parts.length === 1) return parseFloat(parts[0]) * 60;
+      return 0;
+    };
+
+    const closeModal = () => {
+      modal.classList.remove('active');
+      setTimeout(() => modal.remove(), 300);
+    };
+
+    document.getElementById('stravaUploadClose').onclick = closeModal;
+    document.getElementById('stravaUploadCancel').onclick = closeModal;
+
+    document.getElementById('stravaUploadConfirm').onclick = async () => {
+      const status = document.getElementById('stravaUploadStatus');
+      const timeVal = parseTimeInput(document.getElementById('stravaUploadTime').value);
+      const distVal = parseFloat(document.getElementById('stravaUploadDist').value.replace(',', '.')) || 0;
+      const nameVal = document.getElementById('stravaUploadName').value.trim();
+
+      if (!timeVal || timeVal <= 0) {
+        status.textContent = '⚠️ El tiempo es obligatorio';
+        status.className = 'strava-upload-status error';
+        return;
+      }
+
+      status.textContent = '⏳ Subiendo a Strava...';
+      status.className = 'strava-upload-status';
+      document.getElementById('stravaUploadConfirm').disabled = true;
+
+      const planLabel = planType ? planType.toUpperCase() : '';
+      const weekLabel = weekIndex !== undefined ? `Semana ${weekIndex + 1}` : '';
+
+      const result = await this.createActivity({
+        name: nameVal || 'RunningTrainer Workout',
+        elapsedTime: timeVal,
+        distance: distVal > 0 ? distVal * 1000 : 0,
+        description: `${planLabel} · ${weekLabel} — via RunningTrainer`,
+        sportType,
+      });
+
+      if (result) {
+        status.textContent = '✅ ¡Actividad subida a Strava!';
+        status.className = 'strava-upload-status success';
+        if (window.showToast) showToast('✅ Actividad subida a Strava', 'success');
+        setTimeout(closeModal, 1500);
+        // Refrescar widget
+        this.fetchActivities(true).then(() => this.renderWidget());
+      } else {
+        status.textContent = '❌ Error al subir. Inténtalo de nuevo.';
+        status.className = 'strava-upload-status error';
+        document.getElementById('stravaUploadConfirm').disabled = false;
+      }
+    };
   },
 
   // ─── INIT ─────────────────────────────────────────────────────────────────

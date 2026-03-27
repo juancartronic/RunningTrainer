@@ -63,6 +63,8 @@ let isRunning = false;
 let isExercise = true;
 let totalReps = 0;
 let currentRep = 0;
+let timerStartTimestamp = null;
+let lastTimerElapsedSeconds = null;
 
 const TIMER_RING_RADIUS = 96;
 const TIMER_RING_CIRCUMFERENCE = 2 * Math.PI * TIMER_RING_RADIUS;
@@ -1292,6 +1294,20 @@ function toggleDayComplete(weekIndex, dayIndex, button, weekButton) {
   // Mostrar notificación
   if (!currentStatus) {
     showToast(`¡Entrenamiento completado! +${XP_POR_PLAN[planActual] || 15} XP 🌟`, "success");
+    
+    // Ofrecer subir a Strava si está conectado
+    if (window.STRAVA && STRAVA.isConnected()) {
+      setTimeout(() => {
+        STRAVA.showUploadModal({
+          planText: dayDescription,
+          planType: planActual,
+          weekIndex,
+          dayIndex,
+          timerSeconds: lastTimerElapsedSeconds || 0,
+        });
+        lastTimerElapsedSeconds = null; // Consumir el dato del temporizador
+      }, 500);
+    }
   } else {
     showToast("Entrenamiento marcado como pendiente.", "error");
   }
@@ -1787,6 +1803,7 @@ function startTimer() {
   currentRep = 0;
   isRunning = true;
   isExercise = true;
+  timerStartTimestamp = Date.now();
   timerModal.classList.add('running');
   ensureAudioContext();
   nextPhase();
@@ -1835,6 +1852,12 @@ function nextPhase() {
       timerPhaseHint.textContent = 'Excelente trabajo';
       isRunning = false;
       timerModal.classList.remove('running');
+
+      // Guardar tiempo real del temporizador
+      if (timerStartTimestamp) {
+        lastTimerElapsedSeconds = Math.round((Date.now() - timerStartTimestamp) / 1000);
+        timerStartTimestamp = null;
+      }
 
       if (soundMode === 'on' || soundMode === 'success') {
         createCompletionSound();
