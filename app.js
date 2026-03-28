@@ -65,6 +65,8 @@ let totalReps = 0;
 let currentRep = 0;
 let timerStartTimestamp = null;
 let lastTimerElapsedSeconds = null;
+let lastGpsData = null; // Datos GPS del último entrenamiento
+let gpsUpdateInterval = null; // Intervalo para actualizar UI del GPS
 
 const TIMER_RING_RADIUS = 96;
 const TIMER_RING_CIRCUMFERENCE = 2 * Math.PI * TIMER_RING_RADIUS;
@@ -514,6 +516,12 @@ function initEventListeners() {
 
     if (timerModal.classList.contains('active')) {
       closeTimerModal();
+      return;
+    }
+
+    const distModal = document.getElementById('distanceModal');
+    if (distModal && distModal.classList.contains('active')) {
+      closeDistanceModal();
     }
   });
 
@@ -1213,12 +1221,22 @@ function renderWeeks() {
       }
 
       const timerButton = document.createElement("button");
-      timerButton.className = "btn btn-sm btn-secondary";
-      timerButton.innerHTML = '⏱️ Usar Temporizador';
-      timerButton.onclick = (e) => {
-          e.stopPropagation();
-          openTimerModal(description);
-      };
+      const hasTimer = hasTimerPreset(description);
+      if (hasTimer) {
+        timerButton.className = "btn btn-sm btn-secondary";
+        timerButton.innerHTML = '⏱️ Temporizador';
+        timerButton.onclick = (e) => {
+            e.stopPropagation();
+            openTimerModal(description);
+        };
+      } else {
+        timerButton.className = "btn btn-sm btn-secondary";
+        timerButton.innerHTML = '📍 Iniciar Entrenamiento';
+        timerButton.onclick = (e) => {
+            e.stopPropagation();
+            openDistanceModal(description, weekIndex, dayIndex);
+        };
+      }
 
       const completeButton = document.createElement("button");
       const isCompleted = currentUser.progressData[planActual][`semana${weekIndex}`][dayIndex];
@@ -1304,8 +1322,10 @@ function toggleDayComplete(weekIndex, dayIndex, button, weekButton) {
           weekIndex,
           dayIndex,
           timerSeconds: lastTimerElapsedSeconds || 0,
+          gpsData: lastGpsData || null,
         });
-        lastTimerElapsedSeconds = null; // Consumir el dato del temporizador
+        lastTimerElapsedSeconds = null;
+        lastGpsData = null;
       }, 500);
     }
   } else {
@@ -1787,10 +1807,176 @@ function parseExerciseAndSetTimer(description) {
 function openTimerModal(description) {
   parseExerciseAndSetTimer(description);
   resetTimer();
+  // Mostrar/ocultar indicador GPS en el modal del timer
+  const gpsIndicator = document.getElementById('timerGpsIndicator');
+  if (gpsIndicator) gpsIndicator.style.display = currentDayWorkout ? 'flex' : 'none';
   timerModal.classList.add('active');
 }
 
+// ===========================================
+// GPS TRACKING — FUNCIONES AUXILIARES
+// ===========================================
+
+function startGpsTracking() {
+  if (!window.GPS) return;
+  lastGpsData = null;
+  const gpsIndicator = document.getElementById('timerGpsIndicator') || document.getElementById('distGpsIndicator');
+  GPS.start((data) => {
+    // Actualizar indicador GPS en vivo
+    if (gpsIndicator) {
+      const distEl = gpsIndicator.querySelector('.gps-distance');
+      const paceEl = gpsIndicator.querySelector('.gps-pace');
+      if (distEl) distEl.textContent = GPS.formatDistance(data.distanceMeters);
+      if (paceEl) paceEl.textContent = GPS.formatPace(data.paceSecsPerKm) + '/km';
+    }
+  });
+  if (gpsIndicator) {
+    gpsIndicator.classList.add('tracking');
+  }
+}
+
+function stopGpsTracking() {
+  if (!window.GPS || !GPS.isTracking()) return;
+  lastGpsData = GPS.stop();
+  if (gpsUpdateInterval) {
+    clearInterval(gpsUpdateInterval);
+    gpsUpdateInterval = null;
+  }
+  const indicators = document.querySelectorAll('.gps-indicator');
+  indicators.forEach(el => el.classList.remove('tracking'));
+}
+
+// ===========================================
+// MODO ENTRENAMIENTO POR DISTANCIA (sin timer)
+// ===========================================
+
+let distanceModalDescription = '';
+let distanceModalWeekIndex = null;
+let distanceModalDayIndex = null;
+let distanceElapsedInterval = null;
+
+function extractTargetDistance(description) {
+  const text = (description || '').toLowerCase();
+  const kmMatches = [...text.matchAll(/(\d+(?:[.,]\d+)?)\s*km/gi)];
+  if (kmMatches.length) {
+    return kmMatches.reduce((sum, m) => sum + parseFloat(m[1].replace(',', '.')), 0);
+  }
+  return 0;
+}
+
+function hasTimerPreset(description) {
+  return Boolean(extractWorkoutPreset(description));
+}
+
+function openDistanceModal(description, weekIndex, dayIndex) {
+  distanceModalDescription = description;
+  distanceModalWeekIndex = weekIndex;
+  distanceModalDayIndex = dayIndex;
+
+  const modal = document.getElementById('distanceModal');
+  if (!modal) return;
+
+  const targetKm = extractTargetDistance(description);
+  document.getElementById('distWorkoutTitle').textContent = description;
+  document.getElementById('distTargetLabel').textContent = targetKm > 0
+    ? `Objetivo: ${targetKm} km` : 'Sin objetivo de distancia';
+  document.getElementById('distCurrentDistance').textContent = '0 m';
+  document.getElementById('distCurrentTime').textContent = '0:00';
+  document.getElementById('distCurrentPace').textContent = '--:--/km';
+  document.getElementById('distStartBtn').style.display = '';
+  document.getElementById('distStopBtn').style.display = 'none';
+
+  const gpsInd = document.getElementById('distGpsIndicator');
+  if (gpsInd) {
+    gpsInd.classList.remove('tracking');
+    const distEl = gpsInd.querySelector('.gps-distance');
+    const paceEl = gpsInd.querySelector('.gps-pace');
+    if (distEl) distEl.textContent = '0 m';
+    if (paceEl) paceEl.textContent = '--:--/km';
+  }
+
+  modal.classList.add('active');
+}
+
+function closeDistanceModal() {
+  stopGpsTracking();
+  if (distanceElapsedInterval) {
+    clearInterval(distanceElapsedInterval);
+    distanceElapsedInterval = null;
+  }
+  const modal = document.getElementById('distanceModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.classList.remove('running');
+  }
+}
+
+function startDistanceTracking() {
+  if (!window.GPS) {
+    showToast('GPS no disponible en este dispositivo', 'error');
+    return;
+  }
+
+  const targetKm = extractTargetDistance(distanceModalDescription);
+  let notified = false;
+
+  document.getElementById('distStartBtn').style.display = 'none';
+  document.getElementById('distStopBtn').style.display = '';
+  document.getElementById('distanceModal').classList.add('running');
+
+  lastGpsData = null;
+  const startTs = Date.now();
+
+  GPS.start((data) => {
+    document.getElementById('distCurrentDistance').textContent = GPS.formatDistance(data.distanceMeters);
+    document.getElementById('distCurrentPace').textContent = GPS.formatPace(data.paceSecsPerKm) + '/km';
+
+    const gpsInd = document.getElementById('distGpsIndicator');
+    if (gpsInd) {
+      const distEl = gpsInd.querySelector('.gps-distance');
+      const paceEl = gpsInd.querySelector('.gps-pace');
+      if (distEl) distEl.textContent = GPS.formatDistance(data.distanceMeters);
+      if (paceEl) paceEl.textContent = GPS.formatPace(data.paceSecsPerKm) + '/km';
+    }
+
+    // Notificar al alcanzar el objetivo
+    if (targetKm > 0 && !notified && data.distanceKm >= targetKm) {
+      notified = true;
+      showToast(`🎉 ¡Has alcanzado los ${targetKm} km! Puedes seguir o parar.`, 'success');
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
+  });
+
+  const gpsInd = document.getElementById('distGpsIndicator');
+  if (gpsInd) gpsInd.classList.add('tracking');
+
+  // Actualizar cronómetro cada segundo
+  distanceElapsedInterval = setInterval(() => {
+    const elapsed = Math.round((Date.now() - startTs) / 1000);
+    document.getElementById('distCurrentTime').textContent = GPS.formatTime(elapsed);
+  }, 1000);
+}
+
+function stopDistanceTracking() {
+  stopGpsTracking();
+  if (distanceElapsedInterval) {
+    clearInterval(distanceElapsedInterval);
+    distanceElapsedInterval = null;
+  }
+
+  const modal = document.getElementById('distanceModal');
+  if (modal) modal.classList.remove('running');
+
+  if (lastGpsData && lastGpsData.distanceMeters > 0) {
+    lastTimerElapsedSeconds = lastGpsData.elapsedSeconds;
+    showToast(`Entrenamiento finalizado: ${GPS.formatDistance(lastGpsData.distanceMeters)} en ${GPS.formatTime(lastGpsData.elapsedSeconds)}`, 'success');
+  }
+
+  closeDistanceModal();
+}
+
 function closeTimerModal() {
+  stopGpsTracking();
   resetTimer();
   timerModal.classList.remove('running');
   timerModal.classList.remove('active');
@@ -1806,6 +1992,10 @@ function startTimer() {
   timerStartTimestamp = Date.now();
   timerModal.classList.add('running');
   ensureAudioContext();
+
+  // Iniciar GPS tracking
+  startGpsTracking();
+
   nextPhase();
 }
 
@@ -1858,6 +2048,9 @@ function nextPhase() {
         lastTimerElapsedSeconds = Math.round((Date.now() - timerStartTimestamp) / 1000);
         timerStartTimestamp = null;
       }
+
+      // Parar GPS y guardar datos
+      stopGpsTracking();
 
       if (soundMode === 'on' || soundMode === 'success') {
         createCompletionSound();

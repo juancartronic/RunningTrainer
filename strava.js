@@ -352,18 +352,20 @@ const STRAVA = {
   },
 
   // ─── MODAL SUBIR A STRAVA ─────────────────────────────────────────────────
-  showUploadModal({ planText, planType, weekIndex, dayIndex, timerSeconds }) {
+  showUploadModal({ planText, planType, weekIndex, dayIndex, timerSeconds, gpsData }) {
     if (!this.isConnected()) return;
 
     const parsed = this.parsePlanData(planText);
     const sportType = this.getSportTypeForPlan(planType);
 
-    // Prioridad para elapsed_time: A) temporizador real, B) parseado del plan, C) vacío (pedir)
-    let estimatedTime = timerSeconds || parsed.totalSeconds || 0;
-    let estimatedDist = parsed.distanceMeters || 0;
+    const hasGpsData = gpsData && gpsData.distanceMeters > 0;
     const hasTimerData = !!timerSeconds;
     const hasParsedTime = parsed.totalSeconds > 0;
-    const needsForm = !hasTimerData && !hasParsedTime;
+
+    // Prioridad para tiempo: GPS > temporizador > parseado del plan
+    let estimatedTime = (hasGpsData ? gpsData.elapsedSeconds : 0) || timerSeconds || parsed.totalSeconds || 0;
+    // Prioridad para distancia: GPS > parseado del plan
+    let estimatedDist = (hasGpsData ? gpsData.distanceMeters : 0) || parsed.distanceMeters || 0;
 
     // Formatear tiempo para mostrar
     const fmtTime = (s) => {
@@ -372,9 +374,13 @@ const STRAVA = {
       return m + ':' + (sec < 10 ? '0' : '') + sec;
     };
 
-    const sourceLabel = hasTimerData ? '⏱️ Temporizador'
+    const sourceLabel = hasGpsData ? '📍 GPS en vivo'
+      : hasTimerData ? '⏱️ Temporizador'
       : hasParsedTime ? '📋 Estimado del plan'
       : '✏️ Introduce tus datos';
+    
+    const timeReadonly = hasGpsData || hasTimerData;
+    const distReadonly = hasGpsData;
 
     // Eliminar modal anterior si existe
     document.getElementById('stravaUploadModal')?.remove();
@@ -397,12 +403,12 @@ const STRAVA = {
           <div class="strava-upload-field">
             <label>Tiempo (min:seg)</label>
             <input type="text" id="stravaUploadTime" value="${fmtTime(estimatedTime)}" 
-                   placeholder="ej: 30:00" ${hasTimerData ? 'readonly' : ''}>
+                   placeholder="ej: 30:00" ${timeReadonly ? 'readonly' : ''}>
           </div>
           <div class="strava-upload-field">
             <label>Distancia (km)</label>
             <input type="text" id="stravaUploadDist" value="${estimatedDist > 0 ? (estimatedDist / 1000).toFixed(2) : ''}" 
-                   placeholder="ej: 5.0 (opcional)">
+                   placeholder="ej: 5.0 (opcional)" ${distReadonly ? 'readonly' : ''}>
           </div>
           <div class="strava-upload-field">
             <label>Nombre actividad</label>

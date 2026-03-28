@@ -1696,6 +1696,80 @@ progress::-webkit-progress-value {
   cursor: pointer;
   transition: opacity 0.2s;
 }
+
+/* ===========================================
+   GPS INDICATOR
+   =========================================== */
+.gps-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0.5rem auto;
+  width: fit-content;
+}
+.gps-indicator.tracking { border-color: #10b981; }
+.gps-indicator.tracking .gps-dot { background: #10b981; animation: gpsBlink 1.2s infinite; }
+.gps-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #64748b;
+  flex-shrink: 0;
+}
+@keyframes gpsBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.gps-label { font-weight: 600; }
+.gps-distance, .gps-pace { font-weight: 500; color: var(--text-primary); }
+.gps-pace { color: var(--gray); }
+
+/* ===========================================
+   DISTANCE TRACKING MODAL
+   =========================================== */
+.distance-target-label {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-top: 0.3rem;
+}
+.distance-live-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0;
+}
+.distance-stat-main .distance-stat-value {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+.distance-stat-row {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+.distance-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.distance-stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.distance-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.15rem;
+}
 .strava-sync-btn       { background: rgba(255,255,255,0.25); color: #fff; }
 .strava-disconnect-btn { background: rgba(0,0,0,0.2);       color: #fff; }
 .strava-sync-btn:hover,

@@ -284,6 +284,14 @@
         </div>
       </div>
 
+      <!-- Indicador GPS en vivo -->
+      <div id="timerGpsIndicator" class="gps-indicator" style="display:none;">
+        <span class="gps-dot"></span>
+        <span class="gps-label">GPS</span>
+        <span class="gps-distance">0 m</span>
+        <span class="gps-pace">--:--/km</span>
+      </div>
+
       <div class="timer-actions">
         <button id="startBtn" class="btn btn-success">Iniciar</button>
         <button id="pauseBtn" class="btn btn-warning">Pausar</button>
@@ -368,10 +376,53 @@
     </div>
   </div>
 
+  <!-- Modal de entrenamiento por distancia (GPS) -->
+  <div id="distanceModal" class="timer-modal-overlay">
+    <div class="timer-modal-content">
+      <button class="timer-modal-close" aria-label="Cerrar modal" onclick="closeDistanceModal()">&times;</button>
+      <div class="timer-top">
+        <h2 class="section-title timer-title">🏃 Entrenamiento</h2>
+        <p id="distWorkoutTitle" class="timer-workout-title">...</p>
+        <p id="distTargetLabel" class="distance-target-label">Objetivo: -- km</p>
+      </div>
+
+      <div class="distance-live-panel">
+        <div class="distance-stat distance-stat-main">
+          <span class="distance-stat-value" id="distCurrentDistance">0 m</span>
+          <span class="distance-stat-label">Distancia</span>
+        </div>
+        <div class="distance-stat-row">
+          <div class="distance-stat">
+            <span class="distance-stat-value" id="distCurrentTime">0:00</span>
+            <span class="distance-stat-label">Tiempo</span>
+          </div>
+          <div class="distance-stat">
+            <span class="distance-stat-value" id="distCurrentPace">--:--/km</span>
+            <span class="distance-stat-label">Ritmo</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="distGpsIndicator" class="gps-indicator">
+        <span class="gps-dot"></span>
+        <span class="gps-label">GPS</span>
+        <span class="gps-distance">0 m</span>
+        <span class="gps-pace">--:--/km</span>
+      </div>
+
+      <div class="timer-actions">
+        <button id="distStartBtn" class="btn btn-success" onclick="startDistanceTracking()">📍 Iniciar GPS</button>
+        <button id="distStopBtn" class="btn btn-danger" style="display:none;" onclick="stopDistanceTracking()">⏹ Finalizar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <script src="data.js"></script>
+  <script src="gps.js"></script>
   <script src="app.js"></script>
+  <script src="runningtrainer.config.js"></script>
   <script src="strava.js"></script>
 </body>
 </html>
