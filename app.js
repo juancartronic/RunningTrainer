@@ -1082,6 +1082,17 @@ function initApp() {
     users[currentUser.email] = currentUser;
     localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
   }
+
+  // Restaurar planes dinámicos si el usuario ya los había generado
+  if (currentUser.pace5k_10k) {
+    planes['10k'] = generate10KPlan(calcular10KPaces(currentUser.pace5k_10k));
+  }
+  if (currentUser.pace5k) {
+    planes['20k'] = generate20KPlan(calcular20KPaces(currentUser.pace5k));
+  }
+  if (currentUser.pace10k) {
+    planes['maraton'] = generateMaratonPlan(calcularMaratonPaces(currentUser.pace10k));
+  }
   
   cambiarPlan("30min");
   
@@ -1105,7 +1116,7 @@ function cambiarPlan(tipo) {
   
   planActual = tipo;
   const nombre = {
-    "30min": "Corre 30 Minutos", "5k": "Corre 5K", "10k": "Corre 10K",
+    "30min": "Corre 30 Minutos", "5k": "Corre 5K", "10k": "Plan 10K Personalizado",
     "fartlek": "Entrenamiento Fartlek", "hiit": "Entrenamiento HIIT",
     "trail": "Trail Running", "sobrepeso": "Principiantes con Sobrepeso",
     "20k": "Plan 20K Personalizado",
@@ -2306,6 +2317,201 @@ function activateWakeLockIfNeeded() {
 
 })();
 
+
+// ===========================================
+// PLAN 10K PERSONALIZADO - LÓGICA COMPLETA
+// ===========================================
+
+function calcular10KPaces(pace5kSecs) {
+  // Ritmo objetivo 10K con Riegel: t2 = t1 * (d2/d1)^1.06
+  const target10kTotal = pace5kSecs * Math.pow(2, 1.06);
+  const targetPerKm   = target10kTotal / 10;
+  // Z2 suave: +20% sobre ritmo objetivo
+  const easyPerKm   = targetPerKm * 1.20;
+  // Z3 medio: +8%
+  const mediumPerKm = targetPerKm * 1.08;
+
+  return {
+    easyPerKm:   Math.round(easyPerKm),
+    mediumPerKm: Math.round(mediumPerKm),
+    targetPerKm: Math.round(targetPerKm),
+    time10k:     Math.round(target10kTotal)
+  };
+}
+
+function generate10KPlan(paces) {
+  const easy   = secsToMMSS(paces.easyPerKm)   + '/km';
+  const medium = secsToMMSS(paces.mediumPerKm)  + '/km';
+  const target = secsToMMSS(paces.targetPerKm)  + '/km';
+
+  return [
+    // S1 — Base aeróbica
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `3 km suaves • Ritmo ${easy}`],
+      ["Miércoles","25 min fuerza: sentadillas, zancadas, plancha"],
+      ["Jueves",   `4 km ritmo cómodo • Ritmo ${easy}`],
+      ["Viernes",  "Descanso"],
+      ["Sábado",   `5 km largo suave • Ritmo ${easy}`],
+      ["Domingo",  "Descanso activo: caminata 30 min"]
+    ],
+    // S2 — Construyendo volumen
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `4 km suaves • Ritmo ${easy}`],
+      ["Miércoles","Series: 5×400 m con 90 seg descanso • Ritmo fuerte"],
+      ["Jueves",   `3 km recuperación • Ritmo ${easy}`],
+      ["Viernes",  "Fuerza + core (25 min)"],
+      ["Sábado",   `6 km largo suave • Ritmo ${easy}`],
+      ["Domingo",  "Descanso"]
+    ],
+    // S3 — Introduciendo ritmo
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `4 km — últimos 1.5 km a ritmo medio • ${medium}`],
+      ["Miércoles","Fuerza piernas (sentadillas búlgaras, peso muerto)"],
+      ["Jueves",   `Series: 4×600 m (90 seg descanso) • Ritmo fuerte`],
+      ["Viernes",  "Descanso"],
+      ["Sábado",   `7 km largo • Ritmo ${easy}`],
+      ["Domingo",  "Descanso activo"]
+    ],
+    // S4 — Descarga
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `3 km muy suave • Ritmo ${easy}`],
+      ["Miércoles","20 min movilidad + core"],
+      ["Jueves",   `3 km suave • Ritmo ${easy}`],
+      ["Viernes",  "Descanso"],
+      ["Sábado",   `5 km suave • Ritmo ${easy}`],
+      ["Domingo",  "Descanso — semana de recuperación"]
+    ],
+    // S5 — Calidad
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `5 km: 2 km suaves + 3 km ritmo medio • ${medium}`],
+      ["Miércoles","Fuerza + core (25 min)"],
+      ["Jueves",   `Series: 3×1 km (90 seg descanso) • Ritmo ${target}`],
+      ["Viernes",  "Descanso"],
+      ["Sábado",   `8 km largo suave • Ritmo ${easy}`],
+      ["Domingo",  "Descanso activo"]
+    ],
+    // S6 — Pico de volumen
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `5 km suaves • Ritmo ${easy}`],
+      ["Miércoles",`Series: 3×1.5 km a ritmo objetivo • ${target} (2 min descanso)`],
+      ["Jueves",   `4 km recuperación • Ritmo ${easy}`],
+      ["Viernes",  "Fuerza liviana (20 min)"],
+      ["Sábado",   `9 km largo — máximo del plan • Ritmo ${easy}`],
+      ["Domingo",  "Descanso"]
+    ],
+    // S7 — Taper
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `4 km suaves • Ritmo ${easy}`],
+      ["Miércoles",`3×800 m a ritmo carrera • ${target}`],
+      ["Jueves",   `3 km suaves • Ritmo ${easy}`],
+      ["Viernes",  "Descanso"],
+      ["Sábado",   `6 km suave • Ritmo ${easy}`],
+      ["Domingo",  "Descanso"]
+    ],
+    // S8 — Semana de carrera
+    [
+      ["Lunes",    "Descanso"],
+      ["Martes",   `3 km suaves • Ritmo ${easy}`],
+      ["Miércoles","3×400 m a ritmo carrera + estiramientos"],
+      ["Jueves",   "Descanso completo"],
+      ["Viernes",  "20 min caminata o movilidad"],
+      ["Sábado",   "Descanso total — descansa bien"],
+      ["Domingo",  "🏆 ¡CARRERA 10K! — Disfruta cada kilómetro"]
+    ]
+  ];
+}
+
+function iniciar10K() {
+  if (!currentUser) return;
+  document.getElementById('modal10K').classList.add('active');
+  if (currentUser.pace5k_10k) {
+    const input = document.getElementById('pace5kInput10K');
+    input.value = secsToMMSS(currentUser.pace5k_10k);
+    calcularYMostrarPaces10K(currentUser.pace5k_10k);
+  }
+}
+
+function calcularYMostrarPaces10K(secs) {
+  const paces = calcular10KPaces(secs);
+  document.getElementById('pace10kEasy').textContent    = secsToMMSS(paces.easyPerKm)   + '/km';
+  document.getElementById('pace10kMedium').textContent  = secsToMMSS(paces.mediumPerKm) + '/km';
+  document.getElementById('pace10kTarget').textContent  = secsToMMSS(paces.targetPerKm) + '/km';
+  const m = Math.floor(paces.time10k / 60);
+  const s = paces.time10k % 60;
+  document.getElementById('time10k').textContent = `${m} min ${String(s).padStart(2,'0')} seg`;
+  document.getElementById('paceSummary10K').style.display = 'block';
+}
+
+// Event listeners del modal 10K
+document.addEventListener('DOMContentLoaded', () => {
+  const modal10K    = document.getElementById('modal10K');
+  const closeBtn    = document.getElementById('closeModal10KBtn');
+  const input       = document.getElementById('pace5kInput10K');
+  const errorMsg    = document.getElementById('pace5k10KError');
+  const generateBtn = document.getElementById('generate10KBtn');
+
+  if (!modal10K) return;
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => modal10K.classList.remove('active'));
+  }
+  modal10K.addEventListener('click', (e) => {
+    if (e.target === modal10K) modal10K.classList.remove('active');
+  });
+
+  if (input) {
+    input.addEventListener('input', () => {
+      const val = input.value.trim();
+      errorMsg.style.display = 'none';
+      if (/^\d{1,2}:\d{2}$/.test(val)) {
+        const secs = mmssToSecs(val);
+        if (!isNaN(secs) && secs > 0) {
+          calcularYMostrarPaces10K(secs);
+        }
+      } else {
+        document.getElementById('paceSummary10K').style.display = 'none';
+      }
+    });
+  }
+
+  if (generateBtn) {
+    generateBtn.addEventListener('click', () => {
+      const val = input.value.trim();
+      if (!/^\d{1,2}:\d{2}$/.test(val)) {
+        errorMsg.style.display = 'block';
+        return;
+      }
+      const secs = mmssToSecs(val);
+      if (isNaN(secs) || secs <= 0) {
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      const paces = calcular10KPaces(secs);
+      planes['10k'] = generate10KPlan(paces);
+
+      if (currentUser) {
+        currentUser.pace5k_10k = secs;
+        saveUserData();
+        if (currentUser.progressData['10k']) {
+          delete currentUser.progressData['10k'];
+          saveUserData();
+        }
+      }
+
+      modal10K.classList.remove('active');
+      cambiarPlan('10k');
+      showToast('🏅 Plan 10K generado con tus ritmos personalizados', 'success');
+    });
+  }
+});
 
 // ===========================================
 // PLAN 20K - LÓGICA COMPLETA

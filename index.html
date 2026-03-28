@@ -158,12 +158,12 @@
         <div class="plan-badge">6 semanas</div>
       </div>
 
-      <div class="plan-card" onclick="cambiarPlan('10k')">
+      <div class="plan-card" onclick="iniciar10K()">
         <div class="plan-circle">
           <span class="plan-icon">🏅</span>
         </div>
         <h3 class="plan-title">10K</h3>
-        <p class="plan-description">Alcanza los 10 kilómetros</p>
+        <p class="plan-description">Plan personalizado según tu ritmo</p>
         <div class="plan-badge">8 semanas</div>
       </div>
 
@@ -339,6 +339,39 @@
 
       <button id="generateMaratonBtn" class="btn btn-primary" style="width:100%; padding:0.8rem;" type="button">
         🚀 Generar mi plan Maratón
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de configuración 10K -->
+  <div id="modal10K" class="profile-modal-overlay">
+    <div class="profile-modal-content" style="max-width: 420px;">
+      <button id="closeModal10KBtn" class="profile-modal-close">&times;</button>
+      <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0.5rem;">🏅 Plan 10K Personalizado</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Introduce tu mejor tiempo en 5K y calcularemos tus ritmos objetivo para el 10K.
+      </p>
+
+      <div style="margin-bottom: 1.2rem;">
+        <label style="display:block; font-weight:600; margin-bottom:0.4rem; color:var(--text-primary);">⏱️ Tiempo en 5K (mm:ss)</label>
+        <input type="text" id="pace5kInput10K" placeholder="Ej: 28:00" maxlength="5"
+          style="width:100%; padding:0.7rem 1rem; border-radius:10px; border:1.5px solid var(--border-color);
+                 background:var(--card-background); color:var(--text-primary); font-size:1.1rem; text-align:center; box-sizing:border-box;">
+        <p id="pace5k10KError" style="color:#ef4444; font-size:0.82rem; margin-top:0.3rem; display:none;">Formato inválido. Usa mm:ss (ej: 28:00)</p>
+      </div>
+
+      <div id="paceSummary10K" style="display:none; background:var(--background-secondary); border-radius:12px; padding:1rem; margin-bottom:1.2rem; font-size:0.88rem;">
+        <div style="font-weight:700; margin-bottom:0.6rem; color:var(--text-primary);">📊 Tus ritmos estimados</div>
+        <div class="pace-row"><span>🟢 Ritmo suave (Z2)</span><span id="pace10kEasy" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🟡 Ritmo medio (Z3)</span><span id="pace10kMedium" style="font-weight:600;"></span></div>
+        <div class="pace-row"><span>🔴 Ritmo objetivo 10K</span><span id="pace10kTarget" style="font-weight:600; color:#3b82f6;"></span></div>
+        <div class="pace-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border-color);">
+          <span>🏁 Tiempo estimado 10K</span><span id="time10k" style="font-weight:700; color:#3b82f6;"></span>
+        </div>
+      </div>
+
+      <button id="generate10KBtn" class="btn btn-primary" style="width:100%; padding:0.8rem;" type="button">
+        🚀 Generar mi plan 10K
       </button>
     </div>
   </div>

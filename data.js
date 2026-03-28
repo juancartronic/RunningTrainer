@@ -18,16 +18,6 @@ const planes = {
         [["Lunes","5 km intercalando ritmos"],["Martes","5 km intercalando ritmos"],["Miércoles","Descanso"],["Jueves","5 km intercalando ritmos"],["Viernes","5 km intercalando ritmos"],["Sábado","Descanso"],["Domingo","5 km intercalando ritmos"]],
         [["Lunes","5 km seguidos cómodamente"],["Martes","5 km seguidos cómodamente"],["Miércoles","Descanso"],["Jueves","5 km seguidos cómodamente"],["Viernes","5 km seguidos cómodamente"],["Sábado","Descanso"],["Domingo","5 km seguidos cómodamente"]]
     ],
-    "10k":[
-        [["Lunes","3 km suaves"],["Martes","4 km caminando/corriendo"],["Miércoles","Descanso"],["Jueves","3 km suaves"],["Viernes","4 km caminando/corriendo"],["Sábado","Descanso"],["Domingo","3 km suaves"]],
-        [["Lunes","4 km"],["Martes","3 km cambios de ritmo"],["Miércoles","Descanso"],["Jueves","4 km"],["Viernes","3 km cambios de ritmo"],["Sábado","Descanso"],["Domingo","4 km"]],
-        [["Lunes","5 km"],["Martes","4 km progresivos"],["Miércoles","Descanso"],["Jueves","5 km"],["Viernes","4 km progresivos"],["Sábado","Descanso"],["Domingo","5 km"]],
-        [["Lunes","5 km con 2 km rápidos"],["Martes","3 km suaves"],["Miércoles","Descanso"],["Jueves","5 km con 2 km rápidos"],["Viernes","3 km suaves"],["Sábado","Descanso"],["Domingo","5 km con 2 km rápidos"]],
-        [["Lunes","6 km con intervalos"],["Martes","4 km suaves"],["Miércoles","Descanso"],["Jueves","6 km con intervalos"],["Viernes","4 km suaves"],["Sábado","Descanso"],["Domingo","6 km con intervalos"]],
-        [["Lunes","5 km"],["Martes","6 km con 3 km rápidos"],["Miércoles","Descanso"],["Jueves","5 km"],["Viernes","6 km con 3 km rápidos"],["Sábado","Descanso"],["Domingo","5 km"]],
-        [["Lunes","4 km suaves"],["Martes","5 km progresivos"],["Miércoles","Descanso"],["Jueves","4 km suaves"],["Viernes","5 km progresivos"],["Sábado","Descanso"],["Domingo","4 km suaves"]],
-        [["Lunes","3 km"],["Martes","Descanso"],["Miércoles","3 km"],["Jueves","Descanso"],["Viernes","¡Corre tus 10 km!"],["Sábado","Descanso"],["Domingo","Recuperación"]]
-    ],
     "fartlek":[
         [["Lunes","2 km corriendo + 1 km fartlek suave"],["Martes","2 km corriendo + 1 km fartlek suave"],["Miércoles","Descanso"],["Jueves","2 km corriendo + 1 km fartlek suave"],["Viernes","2 km corriendo + 1 km fartlek suave"],["Sábado","Descanso"],["Domingo","2 km corriendo + 1 km fartlek suave"]],
         [["Lunes","3 km corriendo + 1 km fartlek intercalando"],["Martes","3 km corriendo + 1 km fartlek intercalando"],["Miércoles","Descanso"],["Jueves","3 km corriendo + 1 km fartlek intercalando"],["Viernes","3 km corriendo + 1 km fartlek intercalando"],["Sábado","Descanso"],["Domingo","3 km corriendo + 1 km fartlek intercalando"]],
