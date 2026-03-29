@@ -462,11 +462,54 @@ Usa **Chart.js** para visualizar:
 
 ```javascript
 // Características del PDF
-- Encabezado con logo RunningTrainer
-- Título del plan y número de semana
-- Tabla con días, entrenamientos y estados
-- Estados: Completado , Pendiente , Descanso 
-- Formato profesional con jsPDF-AutoTable
+```
+
+---
+
+## APK Android (Capacitor)
+
+Esta versión del proyecto ya está preparada para empaquetarse como APK sin afectar tu despliegue web en Vercel.
+
+### Requisitos
+
+- Node.js 18+
+- Java JDK 17 instalado
+- Variable de entorno `JAVA_HOME` apuntando al JDK real
+- Android Studio (SDK + Build Tools)
+
+### Flujo rápido
+
+```bash
+npm install
+npm run android:add
+npm run android:sync
+npm run android:open
+```
+
+Luego en Android Studio:
+
+1. Espera a que termine el sync de Gradle.
+2. Menú Build > Build Bundle(s) / APK(s) > Build APK(s).
+3. APK debug generado en `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+### Comando directo para generar APK debug
+
+```bash
+npm run android:apk
+```
+
+Si falla con `JAVA_HOME is set to an invalid directory`, corrige `JAVA_HOME` hacia tu instalación real de JDK 17.
+
+### Configuración de Strava para APK
+
+El token de Strava no se obtiene desde `api/` dentro de la APK. Debes usar tu backend desplegado.
+
+Edita `runningtrainer.config.js` y define:
+
+```javascript
+window.RUNNING_TRAINER_CONFIG = {
+  apiBaseUrl: 'https://tu-proyecto.vercel.app'
+};
 ```
 
 ### Sistema de Sonidos

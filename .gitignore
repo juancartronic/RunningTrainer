@@ -48,6 +48,7 @@ jspm_packages/
 dist/
 build/
 out/
+www/
 
 # Package manager locks (optional)
 package-lock.json

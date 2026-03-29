@@ -160,7 +160,7 @@ const BADGES = {
   'plan-20k': {
     icon: '🎯',
     name: 'Medio Maratoniano',
-    description: 'Completa el plan 20K'
+    description: 'Completa el plan 1/2 Maratón'
   },
   'plan-maraton': {
     icon: '🏆',
@@ -1056,7 +1056,7 @@ function updateProfileModal() {
           <div style="margin-top: 0.5rem;">Planes que dan m&aacute;s XP:</div>
           <ul>
             <li>Maratón: 65 XP por d&iacute;a</li>
-            <li>20K: 50 XP por d&iacute;a</li>
+            <li>1/2 Maratón: 50 XP por d&iacute;a</li>
             <li>HIIT: 40 XP por d&iacute;a</li>
             <li>Trail: 35 XP por d&iacute;a</li>
             <li>10K: 30 XP por d&iacute;a</li>
@@ -1119,7 +1119,7 @@ function cambiarPlan(tipo) {
     "30min": "Corre 30 Minutos", "5k": "Corre 5K", "10k": "Plan 10K Personalizado",
     "fartlek": "Entrenamiento Fartlek", "hiit": "Entrenamiento HIIT",
     "trail": "Trail Running", "sobrepeso": "Principiantes con Sobrepeso",
-    "20k": "Plan 20K Personalizado",
+    "20k": "Plan 1/2 Maratón Personalizado",
     "maraton": "Maratón 42K Personalizado"
   }[tipo] || "Plan";
   document.getElementById("planTitle").textContent = `Plan de Entrenamiento: ${nombre}`;
@@ -2635,7 +2635,7 @@ function generate20KPlan(paces) {
       ["Jueves",   "Descanso completo"],
       ["Viernes",  "20 min caminata o yoga"],
       ["Sábado",   "Descanso total — descansa bien"],
-      ["Domingo",  "🏆 ¡CARRERA 20K! — Disfruta cada kilómetro"]
+      ["Domingo",  "🏆 ¡CARRERA 21K! — Disfruta cada kilómetro"]
     ]
   ];
 }
@@ -2726,7 +2726,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       modal20K.classList.remove('active');
       cambiarPlan('20k');
-      showToast('🎯 Plan 20K generado con tus ritmos personalizados', 'success');
+      showToast('🎯 Plan 1/2 Maratón generado con tus ritmos personalizados', 'success');
     });
   }
 });
