@@ -2,7 +2,7 @@
 
 **RunningTrainer** es una aplicación web progresiva diseñada para ayudar a corredores de todos los niveles a alcanzar sus objetivos de running mediante planes de entrenamiento estructurados, seguimiento de progreso y un sistema de gamificación con experiencia (XP) y niveles.
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
@@ -36,16 +36,17 @@
 - Gestión de sesiones activas
 ###  **Planes de Entrenamiento**
 - **9 planes especializados** adaptados a diferentes objetivos y niveles:
-  -  Corre 30 Minutos (8 semanas)
-  -  5K (6 semanas)
-  -  10K (8 semanas)
-  -  Fartlek - Cambios de ritmo (6 semanas)
-  -  HIIT - Alta intensidad (6 semanas)
-  -  Trail Running (6 semanas)
   -  Principiantes con Sobrepeso (6 semanas)
-  -  20K Personalizado (8 semanas)
+  -  Corre 30 Minutos (8 semanas)
+  -  5K (8 semanas)
+  -  10K (8 semanas)
+  -  1/2 Maratón Personalizado (8 semanas)
   -  Maratón 42K Personalizado (16 semanas)
-- Cálculo automático de ritmos personalizados para 20K (desde marca 5K)
+  -  Trail Running (8 semanas)
+  -  HIIT - Alta intensidad (8 semanas)
+  -  Fartlek - Cambios de ritmo (6 semanas)
+- **Variedad diaria**: Cada día de la semana tiene un tipo de sesión diferente (fuerza, carrera suave, intervalos, progresivo, tirada larga)
+- Cálculo automático de ritmos personalizados para 1/2 Maratón (desde marca 5K)
 - Cálculo automático de ritmos personalizados para Maratón (desde marca 10K)
 
 ###  **Seguimiento de Progreso**
@@ -56,11 +57,19 @@
 
 ###  **Temporizador Inteligente de Intervalos**
 - **Detección automática de configuración** desde la descripción del entrenamiento
+- Reconoce series, rondas, circuitos, Tabata y formatos NxTiempo
 - Modo pantalla completa con cuenta regresiva circular
-- Identificación de fases: CORRER / CAMINAR
+- Identificación de fases: CORRER/CAMINAR (carrera) o TRABAJO/DESCANSO (HIIT)
 - Alertas sonoras configurables
 - Animación de círculo de progreso SVG
 - Sin necesidad de configuración manual
+
+###  **Seguimiento GPS en Vivo**
+- Tracking GPS para entrenamientos de distancia y fuerza
+- Distancia recorrida, ritmo y tiempo en tiempo real
+- Detección automática de objetivo de distancia (km)
+- Filtro de precisión GPS y anti-teletransportación
+- Integración con Strava para subir actividades
 
 ###  **Sistema de Gamificación**
 - **4 niveles de progresión**:
@@ -127,6 +136,7 @@ Visualiza tu avance con:
 
 ### APIs Web Utilizadas
 - **localStorage** - Persistencia de datos
+- **Geolocation API** - Tracking GPS en vivo
 - **Wake Lock API** - Prevención de bloqueo de pantalla
 - **Vibration API** - Feedback háptico
 - **Web Audio API** - Generación de sonidos de alerta
@@ -230,79 +240,56 @@ Para cada día de entrenamiento:
 
 ##  Planes de Entrenamiento
 
-### 1. **Corre 30 Minutos** (8 semanas)
-**Objetivo**: Lograr correr 30 minutos continuos  
-**Nivel**: Principiante  
-**XP por día**: 15
-
-- Progresión gradual desde series de 1 minuto
-- Incremento semanal de intensidad
-- Ideal para empezar desde cero
-
-### 2. **5K** (6 semanas)
-**Objetivo**: Completar 5 kilómetros  
-**Nivel**: Principiante-Intermedio  
-**XP por día**: 20
-
-- Construcción de resistencia por distancia
-- Introducción a cambios de ritmo
-- Preparación para carreras populares
-
-### 3. **10K** (8 semanas)
-**Objetivo**: Alcanzar los 10 kilómetros  
-**Nivel**: Intermedio-Avanzado  
-**XP por día**: 30
-
-- Incremento progresivo de kilometraje
-- Intervalos y progresivos
-- Base sólida para medio maratón
-
-### 4. **Fartlek** (6 semanas)
-**Objetivo**: Dominar cambios de ritmo  
-**Nivel**: Avanzado  
-**XP por día**: 25
-
-- Juego de velocidades (Fartlek sueco)
-- Mejora de resistencia anaeróbica
-- Variación de intensidad constante
-
-### 5. **HIIT** (6 semanas)
-**Objetivo**: Intervalos de alta intensidad  
-**Nivel**: Avanzado-Experto  
-**XP por día**: 40
-
-- Series cortas de máxima intensidad
-- Descansos activos
-- Quema calórica maximizada
-
-### 6. **Trail Running** (6 semanas)
-**Objetivo**: Adaptación a terreno irregular  
-**Nivel**: Intermedio-Avanzado  
-**XP por día**: 35
-
-- Senderos y montaña
-- Fortalecimiento de tobillos
-- Conexión con naturaleza
-
-### 7. **Principiantes con Sobrepeso** (6 semanas)
+### 1. **Principiantes con Sobrepeso** (6 semanas)
 **Objetivo**: Inicio suave y seguro  
 **Nivel**: Principiante  
 **XP por día**: 10
 
-- Enfoque en caminata con intervalos cortos
-- Progresión muy gradual
+- Enfoque en caminata con intervalos cortos de trote
+- Progresión muy gradual de 10 min a 35 min
 - Prevención de lesiones
 
-### 8. **20K Personalizado** (8 semanas)
-**Objetivo**: Preparar una carrera de 20 kilómetros con ritmos individualizados  
+### 2. **Corre 30 Minutos** (8 semanas)
+**Objetivo**: Lograr correr 30 minutos continuos  
+**Nivel**: Principiante  
+**XP por día**: 15
+
+- Lunes: Caminata activa + fuerza básica (sentadillas, zancadas, plancha)
+- Martes: Sesión principal trote/caminar progresivo
+- Jueves: Intervalos cortos con cambios de ritmo
+- Viernes: Carrera continua suave o progresivo
+- Domingo: Sesión larga progresiva (hasta 30 min)
+
+### 3. **5K** (8 semanas)
+**Objetivo**: Completar 5 kilómetros  
+**Nivel**: Principiante-Intermedio  
+**XP por día**: 20
+
+- Lunes: Fuerza/técnica de carrera (sentadillas, zancadas, plancha, skipping)
+- Martes: Carrera continua suave (base aeróbica)
+- Jueves: Intervalos y series (200m, 400m, 600m, 1000m)
+- Viernes: Tempo/progresivo (gestión del ritmo 5K)
+- Domingo: Tirada larga (2.5 km → 7 km), incluye CARRERA 5K final
+
+### 4. **10K** (8 semanas)
+**Objetivo**: Alcanzar los 10 kilómetros  
+**Nivel**: Intermedio-Avanzado  
+**XP por día**: 30
+
+- Plan personalizado según tu marca en 5K
+- Intervalos y progresivos con ritmos calculados
+- Base sólida para medio maratón
+
+### 5. **1/2 Maratón Personalizado** (8 semanas)
+**Objetivo**: Preparar una carrera de 21 kilómetros con ritmos individualizados  
 **Nivel**: Intermedio-Avanzado  
 **XP por día**: 50
 
 - Se genera a partir de tu mejor tiempo en 5K
-- Calcula ritmos Z2, Z3 y ritmo objetivo 20K
+- Calcula ritmos Z2, Z3 y ritmo objetivo 21K
 - Incluye semanas de base, calidad, pico y taper
 
-### 9. **Maratón 42K Personalizado** (16 semanas)
+### 6. **Maratón 42K Personalizado** (16 semanas)
 **Objetivo**: Preparar un maratón completo con planificación por bloques  
 **Nivel**: Avanzado-Experto  
 **XP por día**: 65
@@ -310,6 +297,38 @@ Para cada día de entrenamiento:
 - Se genera a partir de tu mejor tiempo en 10K
 - Calcula ritmos Z2, Z3, tempo y ritmo maratón
 - Estructura de 16 semanas: base, calidad, pico y taper
+
+### 7. **Trail Running** (8 semanas)
+**Objetivo**: Adaptación a terreno de montaña  
+**Nivel**: Intermedio-Avanzado  
+**XP por día**: 35
+
+- Lunes: Fuerza trail (sentadillas, zancadas, cuestas, escalones)
+- Martes: Carrera suave en sendero (base aeróbica)
+- Jueves: Intervalos/fartlek en terreno variado con subidas y bajadas
+- Viernes: Carrera con desnivel (técnica de subida y bajada)
+- Domingo: Tirada larga progresiva (5 km → 18 km en montaña)
+
+### 8. **HIIT** (8 semanas)
+**Objetivo**: Intervalos de alta intensidad con ejercicios variados  
+**Nivel**: Avanzado-Experto  
+**XP por día**: 40
+
+- Lunes: Fuerza explosiva (sentadilla salto, burpees, zancada explosiva)
+- Martes: Cardio HIIT / Tabata (sprints máximos)
+- Jueves: Circuito completo (burpees, skipping, sentadillas, plancha, jumping jacks)
+- Viernes: Core + pliometría (mountain climbers, V-ups, plancha dinámica, saltos)
+- Domingo: HIIT largo (intervalos de mayor duración)
+- Progresión: 20s/40s → 30s/30s → 40s/20s → 45s/15s (Tabata)
+
+### 9. **Fartlek** (6 semanas)
+**Objetivo**: Dominar cambios de ritmo  
+**Nivel**: Avanzado  
+**XP por día**: 25
+
+- Juego de velocidades (Fartlek sueco)
+- Mejora de resistencia anaeróbica
+- Variación de intensidad constante
 
 ---
 
@@ -359,9 +378,19 @@ RunningTrainer/
 ├── styles.css              # Estilos CSS personalizados
 ├── app.js                  # Lógica JavaScript principal
 ├── data.js                 # Datos de planes de entrenamiento
+├── gps.js                  # Módulo de tracking GPS
+├── strava.js               # Integración con Strava API
+├── callback.html           # Callback OAuth de Strava
+├── runningtrainer.config.js # Configuración de la app
+├── capacitor.config.ts     # Configuración Capacitor (Android)
+├── vercel.json             # Configuración de despliegue Vercel
+├── package.json            # Dependencias y scripts
 ├── README.md               # Este archivo
 ├── LICENSE                 # Licencia MIT
-└── .gitignore             # Archivos ignorados por Git
+├── api/                    # API serverless (Strava token)
+├── android/                # Proyecto Android (Capacitor)
+├── www/                    # Assets web para Capacitor
+└── scripts/                # Scripts de build
 ```
 
 ### Descripción de Archivos
@@ -392,11 +421,23 @@ RunningTrainer/
 - Objeto `planes` con todos los entrenamientos
 - Estructura: `plan -> semanas -> [día, descripción]`
 - 7 planes base estáticos con 6-8 semanas cada uno
+- Cada día tiene ejercicios variados (fuerza, carrera, intervalos, tirada larga)
+
+#### `gps.js`
+- Módulo de tracking GPS con Haversine
+- Filtro de precisión y anti-teletransportación
+- Cálculo de distancia, ritmo y tiempo en vivo
+
+#### `strava.js`
+- Integración con Strava API
+- Subida de actividades desde la app
 
 #### `app.js` (planes personalizados)
-- Generación dinámica de plan **20K** según marca en 5K
+- Generación dinámica de plan **10K** según marca en 5K
+- Generación dinámica de plan **1/2 Maratón** según marca en 5K
 - Generación dinámica de plan **Maratón 42K** según marca en 10K
 - Cálculo de ritmos con fórmula de Riegel
+- Parser inteligente de ejercicios para temporizador/GPS
 - Persistencia de ritmos personalizados por usuario
 
 ---
@@ -431,12 +472,14 @@ RunningTrainer/
 ### Temporizador Automático
 
 **Parser de Entrenamiento**:
-- Detecta patrones como: `"5 Series de 1 min corriendo + 2 min caminando"`
-- Extrae:
-  - Número de series: `5`
-  - Tiempo de ejercicio: `60 segundos`
-  - Tiempo de descanso: `120 segundos`
-  - Labels: `CORRER`, `CAMINAR`
+- Detecta patrones de carrera: `"5x2 min trote + 1 min caminando"`
+- Detecta patrones HIIT: `"3 rondas (20s burpees + 20s skipping) 40s descanso"`
+- Detecta Tabata: `"4 rondas de 20s sprint máximo + 10s desc x8"`
+- Reconoce formatos: series, rondas, circuitos, NxTiempo
+- Sufijos de tiempo: min, seg, s
+- Labels automáticas: CORRER/CAMINAR (carrera) o TRABAJO/DESCANSO (HIIT)
+- Ejercicios de fuerza/activación → modo GPS (sin temporizador)
+- Ejercicios con distancia (km) → modo GPS con objetivo
 
 **Modo Pantalla Completa**:
 - Círculo SVG animado que se vacía con el tiempo
@@ -523,9 +566,10 @@ Toggle configurable: 🔔 Sonido ON/OFF
 
 ### Planes Personalizados por Ritmo
 
-- El plan **20K** se genera tras introducir un tiempo de referencia de 5K en formato `mm:ss`.
+- El plan **10K** se genera tras introducir un tiempo de referencia de 5K en formato `mm:ss`.
+- El plan **1/2 Maratón** se genera tras introducir un tiempo de referencia de 5K en formato `mm:ss`.
 - El plan **Maratón** se genera tras introducir un tiempo de referencia de 10K en formato `mm:ss`.
-- Ambos planes muestran una vista previa de ritmos antes de generar el calendario completo.
+- Todos los planes muestran una vista previa de ritmos antes de generar el calendario completo.
 - Los ritmos quedan guardados por usuario para reutilizarlos en futuras sesiones.
 
 ---
@@ -606,13 +650,13 @@ utilizar el Software sin restricción...
 
 **Autor**: Juanka  
 **Proyecto**: RunningTrainer  
-**GitHub**: [github.com/tu-usuario/running-trainer](https://github.com/tu-usuario/running-trainer)
+**GitHub**: [github.com/juancartronic/RunningTrainer](https://github.com/juancartronic/RunningTrainer)
 
 ### Enlaces Útiles
 
--  [Reportar un Bug](https://github.com/tu-usuario/running-trainer/issues)
--  [Solicitar Funcionalidad](https://github.com/tu-usuario/running-trainer/issues/new)
--  [Dar Estrella al Proyecto](https://github.com/tu-usuario/running-trainer)
+-  [Reportar un Bug](https://github.com/juancartronic/RunningTrainer/issues)
+-  [Solicitar Funcionalidad](https://github.com/juancartronic/RunningTrainer/issues/new)
+-  [Dar Estrella al Proyecto](https://github.com/juancartronic/RunningTrainer)
 
 ---
 
@@ -626,6 +670,22 @@ utilizar el Software sin restricción...
 ---
 
 ##  Changelog
+
+### v1.2.0 (2026-03-29)
+-  Planes mejorados con variedad diaria: 30 Min, 5K, Trail Running, HIIT
+-  Todos los planes ahora tienen ejercicios diferentes cada día (fuerza, intervalos, tirada larga...)
+-  5K ampliado a 8 semanas con carrera final integrada
+-  Trail Running ampliado a 8 semanas con cuestas, técnica y tiradas largas (hasta 18 km)
+-  HIIT ampliado a 8 semanas con circuitos, Tabata, fuerza explosiva y core
+-  Renombrado plan 20K → 1/2 Maratón (21K)
+-  Reordenadas tarjetas de planes por progresión lógica
+-  Parser de temporizador mejorado: reconoce rondas, circuitos, Tabata, sufijo "s", NxTiempo
+-  Labels TRABAJO/DESCANSO para ejercicios HIIT
+-  Ejercicios de fuerza redirigidos al modo GPS en lugar de temporizador
+-  Sincronización automática de semanas si un plan crece (progressData)
+-  Seguimiento GPS en vivo con distancia, ritmo y tiempo
+-  Integración con Strava API
+-  Soporte Android con Capacitor
 
 ### v1.1.0 (2026-03-14)
 -  Nuevos planes personalizados: 20K (8 semanas) y Maratón 42K (16 semanas)
