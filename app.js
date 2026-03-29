@@ -1727,14 +1727,36 @@ function extractWorkoutPreset(description) {
     return null;
   }
 
-  const seriesMatch = normalized.match(/(\d+)\s*series?/i);
-  const reps = seriesMatch ? parseInt(seriesMatch[1], 10) : 1;
-  const timeMatches = [...normalized.matchAll(/(\d+(?:[\.,]\d+)?)\s*(min|minuto|minutos|seg|segundo|segundos)/gi)];
+  // Detectar contexto HIIT (rondas, circuitos, tabata)
+  const isHIIT = /ronda|circuito|tabata|hiit/i.test(normalized);
+
+  // Ejercicios de fuerza/activación sin contexto HIIT → no timer (modo GPS)
+  if (/^(fuerza|activaci[oó]n)\b/i.test(normalized) && !isHIIT) {
+    return null;
+  }
+
+  // Parsear repeticiones: "N series", "N rondas", o "NxTIEMPO"
+  const seriesMatch = normalized.match(/(\d+)\s*(series?|rondas?)/i);
+  const nxTimeMatch = normalized.match(/(\d+)\s*x\s*(\d+(?:[\.,]\d+)?)\s*(min|minuto|minutos|seg|segundo|segundos|s)\b/i);
+  let reps = seriesMatch ? parseInt(seriesMatch[1], 10) : (nxTimeMatch ? parseInt(nxTimeMatch[1], 10) : 1);
+
+  // Multiplicador "xN" al final (ej: "3 rondas de 20s ... x5")
+  const xEndMatch = normalized.match(/x(\d+)\s*$/);
+  if (xEndMatch && seriesMatch) {
+    reps = parseInt(seriesMatch[1], 10) * parseInt(xEndMatch[1], 10);
+  }
+
+  // Buscar valores de tiempo — incluye "s" como abreviatura de segundos
+  const timeMatches = [...normalized.matchAll(/(\d+(?:[\.,]\d+)?)\s*(min|minuto|minutos|seg|segundo|segundos|s)\b/gi)];
   const seconds = timeMatches.map(match => parseTimeToSeconds(match[1], match[2])).filter(Boolean);
 
   if (!seconds.length) {
     return null;
   }
+
+  // Labels según tipo de ejercicio
+  const exerciseLabel = isHIIT ? 'TRABAJO' : 'CORRER';
+  const restLabel = isHIIT ? 'DESCANSO' : 'CAMINAR';
 
   if (seconds.length === 1) {
     return {
@@ -1742,15 +1764,39 @@ function extractWorkoutPreset(description) {
       reps,
       exerciseTime: seconds[0],
       restTime: 0,
-      exerciseLabel: 'CORRER',
-      restLabel: 'CAMINAR'
+      exerciseLabel,
+      restLabel
     };
   }
 
-  // Detectar el orden correcto de las actividades según las palabras clave
-  // Buscar qué actividad aparece primero en el texto
+  // Para HIIT: detectar tiempo de descanso por palabra clave y sumar tiempos de trabajo
+  if (isHIIT) {
+    let restIdx = -1;
+    const descKeywordIdx = normalized.search(/descanso|desc\b|caminar/i);
+    if (descKeywordIdx >= 0) {
+      let minDist = Infinity;
+      timeMatches.forEach((match, idx) => {
+        const dist = Math.abs(match.index - descKeywordIdx);
+        if (dist < minDist) {
+          minDist = dist;
+          restIdx = idx;
+        }
+      });
+    }
+    if (restIdx >= 0) {
+      const restTime = seconds[restIdx];
+      const exerciseTime = seconds.reduce((sum, s, i) => i !== restIdx ? sum + s : sum, 0);
+      return { title: cleaned, reps, exerciseTime, restTime, exerciseLabel, restLabel };
+    }
+    // Fallback: último tiempo es descanso, resto es trabajo
+    const restTime = seconds[seconds.length - 1];
+    const exerciseTime = seconds.slice(0, -1).reduce((a, b) => a + b, 0);
+    return { title: cleaned, reps, exerciseTime, restTime, exerciseLabel, restLabel };
+  }
+
+  // Para ejercicios de carrera: detectar orden caminar/correr
   const walkingWords = ['caminando', 'caminar', 'caminata'];
-  const runningWords = ['corriendo', 'correr', 'fuerte', 'rápid'];
+  const runningWords = ['corriendo', 'correr', 'fuerte', 'rápid', 'trote', 'ritmo'];
   
   const walkingIndex = Math.min(...walkingWords.map(word => {
     const idx = normalized.indexOf(word);
@@ -1771,8 +1817,8 @@ function extractWorkoutPreset(description) {
       reps,
       exerciseTime: seconds[1],  // El segundo tiempo es para correr
       restTime: seconds[0],      // El primer tiempo es para caminar
-      exerciseLabel: 'CORRER',
-      restLabel: 'CAMINAR'
+      exerciseLabel,
+      restLabel
     };
   }
 
@@ -1781,8 +1827,8 @@ function extractWorkoutPreset(description) {
     reps,
     exerciseTime: seconds[0],
     restTime: seconds[1],
-    exerciseLabel: 'CORRER',
-    restLabel: 'CAMINAR'
+    exerciseLabel,
+    restLabel
   };
 }
 
