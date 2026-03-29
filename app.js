@@ -1133,7 +1133,7 @@ function cambiarPlan(tipo) {
   });
   
   // Marcar la tarjeta activa
-  const planIndex = ['30min', '5k', '10k', 'fartlek', 'hiit', 'trail', 'sobrepeso', '20k', 'maraton'].indexOf(tipo);
+  const planIndex = ['sobrepeso', '30min', '5k', '10k', '20k', 'maraton', 'trail', 'hiit', 'fartlek'].indexOf(tipo);
   if (planIndex >= 0) {
     const cards = document.querySelectorAll('.plan-card');
     if (cards[planIndex]) {
