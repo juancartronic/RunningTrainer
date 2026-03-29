@@ -1155,6 +1155,19 @@ function cambiarPlan(tipo) {
     users[currentUser.email] = currentUser;
     localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
     showToast(`¡Nuevo plan "${nombre}" iniciado!`, "success");
+  } else {
+    // Sincronizar semanas si el plan cambió de tamaño
+    let updated = false;
+    planes[tipo].forEach((weekDays, weekIndex) => {
+      if (!currentUser.progressData[tipo][`semana${weekIndex}`]) {
+        currentUser.progressData[tipo][`semana${weekIndex}`] = Array(weekDays.length).fill(false);
+        updated = true;
+      }
+    });
+    if (updated) {
+      users[currentUser.email] = currentUser;
+      localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+    }
   }
   renderWeeks();
   updateChart();
