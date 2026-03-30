@@ -421,7 +421,16 @@ function initEventListeners() {
       return;
     }
 
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          level
+        }
+      }
+    });
     if (error) {
       showToast(error.message, 'error');
       return;
@@ -456,11 +465,11 @@ function initEventListeners() {
     currentSupabaseSession = data.session;
     const uid = data.session.user.id;
     profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
-    const profile = profiles[uid];
+    let profile = profiles[uid];
     if (!profile) {
-      showToast('Perfil no encontrado. Vuelve a registrarte', 'error');
-      await supabaseClient.auth.signOut();
-      return;
+      profile = buildProfileFromSession(data.session);
+      profiles[uid] = profile;
+      localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
     }
     loginUser(data.session, profile);
   });
@@ -884,6 +893,19 @@ function loginUser(session, profile) {
   setTimeout(() => { if (window.STRAVA) STRAVA.init(); }, 200);
 }
 
+function buildProfileFromSession(session) {
+  const user = session?.user || {};
+  const metadata = user.user_metadata || {};
+  return {
+    name: metadata.name || user.email?.split('@')[0] || 'Runner',
+    email: user.email || '',
+    level: metadata.level || 'beginner',
+    xp: 0,
+    progressData: {},
+    createdAt: new Date().toISOString()
+  };
+}
+
 async function checkAuthStatus() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session?.user) return false;
@@ -891,8 +913,12 @@ async function checkAuthStatus() {
   currentSupabaseSession = session;
   const uid = session.user.id;
   profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
-  const profile = profiles[uid];
-  if (!profile) return false;
+  let profile = profiles[uid];
+  if (!profile) {
+    profile = buildProfileFromSession(session);
+    profiles[uid] = profile;
+    localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
+  }
 
   currentUser = profile;
   users[profile.email] = currentUser;
