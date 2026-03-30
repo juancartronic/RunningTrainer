@@ -1,13 +1,19 @@
 // ===========================================
 // SISTEMA DE AUTENTICACIÓN Y USUARIOS
 // ===========================================
-const RT_PROFILES_KEY = 'rtProfiles';
-let profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
-let users = {};
+let users = JSON.parse(localStorage.getItem("runningTrainerUsers")) || {};
 let currentUser = null;
-let currentSupabaseSession = null;
 let planActual = "30min";
-const MIN_PASSWORD_LENGTH = 8;
+const AUTH_CONFIG = {
+  schemaVersion: 2,
+  pbkdf2Iterations: 120000,
+  pbkdf2Hash: 'SHA-256',
+  minPasswordLength: 8,
+  maxFailedAttempts: 5,
+  lockoutMs: 5 * 60 * 1000
+};
+const LOGIN_ATTEMPTS_KEY = 'runningTrainerLoginAttempts';
+let loginAttempts = JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '{}');
 let chart;
 const _savedDarkMode = localStorage.getItem('darkMode');
 let darkMode = _savedDarkMode !== null
@@ -341,21 +347,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Aplicar tema siempre al arrancar (oscuro o claro)
   applyDarkMode();
   
-  // Verificar autenticación (async con Supabase)
-  const authCheckPromise = checkAuthStatus();
-
+  // Verificar autenticación primero
+  const isAuthenticated = checkAuthStatus();
+  
   setTimeout(() => {
     splashTitle.style.animation = 'fadeInUp 0.8s ease-out forwards';
     loadingCircle.style.animation = 'fadeInUp 0.8s ease-out 0.3s forwards';
   }, 100);
-
-  setTimeout(async () => {
+  
+  setTimeout(() => {
     splashScreen.style.opacity = '0';
     document.body.classList.add('app-loaded');
     setTimeout(() => splashScreen.remove(), 500);
-
+    
     // Si no está autenticado, mostrar el formulario de login
-    const isAuthenticated = await authCheckPromise;
     if (!isAuthenticated) {
       authContainer.classList.remove('hidden');
     }
@@ -402,99 +407,79 @@ function initEventListeners() {
   // Registrar nuevo usuario
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const name     = document.getElementById('registerName').value.trim();
-    const email    = document.getElementById('registerEmail').value.trim().toLowerCase();
+    
+    const name = document.getElementById('registerName').value;
+    const email = normalizeEmail(document.getElementById('registerEmail').value);
     const password = document.getElementById('registerPassword').value;
-    const level    = document.getElementById('registerLevel').value;
+    const level = document.getElementById('registerLevel').value;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showToast('Ingresa un correo electrónico válido', 'error');
-      return;
-    }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      showToast(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`, 'error');
-      return;
-    }
-    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-      showToast('La contraseña debe incluir letras y números', 'error');
+    if (!isValidEmail(email)) {
+      showToast('Ingresa un correo electronico valido', 'error');
       return;
     }
 
-    if (!supabaseClient) { showToast('Error: Supabase no conectado. Recarga la página.', 'error'); return; }
-    try {
-      const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-            level
-          }
-        }
-      });
-      if (error) {
-        showToast(error.message, 'error');
-        return;
-      }
-
-      const uid     = data.user.id;
-      const profile = { name, email, level, xp: 0, progressData: {}, createdAt: new Date().toISOString() };
-      profiles[uid] = profile;
-      localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
-
-      if (data.session) {
-        currentSupabaseSession = data.session;
-        loginUser(data.session, profile);
-      } else {
-        showToast('Revisa tu correo para confirmar la cuenta', 'success');
-      }
-    } catch (err) {
-      console.error('Register error:', err);
-      showToast('Error de conexión: ' + (err.message || 'revisa consola'), 'error');
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      showToast(passwordValidation.message, 'error');
+      return;
     }
+    
+    if (users[email]) {
+      showToast('Este correo ya está registrado', 'error');
+      return;
+    }
+
+    const securedPassword = await buildSecuredPassword(password);
+    const useLegacyPasswordFallback = !securedPassword;
+    
+    // Crear nuevo usuario
+    users[email] = {
+      name,
+      email,
+      passwordHash: securedPassword?.passwordHash,
+      passwordSalt: securedPassword?.passwordSalt,
+      passwordAlgo: securedPassword?.passwordAlgo,
+      passwordIterations: securedPassword?.passwordIterations,
+      authSchemaVersion: securedPassword ? AUTH_CONFIG.schemaVersion : 1,
+      ...(useLegacyPasswordFallback ? { password } : {}),
+      level,
+      xp: 0,
+      progressData: {},
+      createdAt: new Date().toISOString()
+    };
+    
+    // Guardar en localStorage
+    localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+
+    if (useLegacyPasswordFallback) {
+      showToast('Seguridad limitada: el navegador no soporta cifrado moderno', 'error');
+    }
+    
+    // Iniciar sesión automáticamente
+    await loginUser(email, password);
   });
 
   // Iniciar sesión
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
+    
+    const email = normalizeEmail(document.getElementById('loginEmail').value);
     const password = document.getElementById('loginPassword').value;
-
-    if (!supabaseClient) { showToast('Error: Supabase no conectado. Recarga la página.', 'error'); return; }
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        showToast('Correo o contraseña incorrectos', 'error');
-        return;
-      }
-
-      currentSupabaseSession = data.session;
-      const uid = data.session.user.id;
-      profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
-      let profile = profiles[uid];
-      if (!profile) {
-        profile = buildProfileFromSession(data.session);
-        profiles[uid] = profile;
-        localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
-      }
-      loginUser(data.session, profile);
-    } catch (err) {
-      console.error('Login error:', err);
-      showToast('Error de conexión: ' + (err.message || 'revisa consola'), 'error');
-    }
+    
+    await loginUser(email, password);
   });
 
   // Cerrar sesión
-  logoutBtn.addEventListener('click', async () => {
+  logoutBtn.addEventListener('click', () => {
     profileModal.classList.remove('active');
-    await supabaseClient.auth.signOut();
     currentUser = null;
-    currentSupabaseSession = null;
     disableWakeLock();
-    userBar.classList.add('visible');
+    localStorage.removeItem("currentUser");
+    
+    userBar.classList.add("visible");
+
     authContainer.classList.remove('hidden');
+    
     showToast('Sesión cerrada correctamente', 'success');
   });
 
@@ -786,11 +771,9 @@ function countPerfectWeeks() {
 }
 
 function saveUserData() {
-  if (currentUser && currentSupabaseSession?.user?.id) {
-    const uid = currentSupabaseSession.user.id;
-    profiles[uid] = currentUser;
-    localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
+  if (currentUser) {
     users[currentUser.email] = currentUser;
+    localStorage.setItem('runningTrainerUsers', JSON.stringify(users));
   }
 }
 
@@ -893,59 +876,251 @@ async function setSoundMode(nextMode, soundOptions, showFeedback = false) {
   }
 }
 
-function loginUser(session, profile) {
-  currentUser = profile;
-  users[profile.email] = profile;
-  authContainer.classList.add('hidden');
-  userBar.classList.add('visible');
-  updateUserInterface();
-  initApp();
-  showToast(`¡Bienvenido/a, ${profile.name}!`, 'success');
-  activateWakeLockIfNeeded();
-  setTimeout(() => { if (window.STRAVA) STRAVA.init(); }, 200);
+function normalizeEmail(email = '') {
+  return String(email).trim().toLowerCase();
 }
 
-function buildProfileFromSession(session) {
-  const user = session?.user || {};
-  const metadata = user.user_metadata || {};
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePasswordStrength(password = '') {
+  if (password.length < AUTH_CONFIG.minPasswordLength) {
+    return {
+      valid: false,
+      message: `La contrasena debe tener al menos ${AUTH_CONFIG.minPasswordLength} caracteres`
+    };
+  }
+
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    return {
+      valid: false,
+      message: 'La contrasena debe incluir letras y numeros'
+    };
+  }
+
+  return { valid: true, message: '' };
+}
+
+function toBase64(bytes) {
+  let binary = '';
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+}
+
+function generateSalt(size = 16) {
+  const salt = new Uint8Array(size);
+  crypto.getRandomValues(salt);
+  return toBase64(salt);
+}
+
+async function derivePasswordHash(password, salt, iterations = AUTH_CONFIG.pbkdf2Iterations) {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: AUTH_CONFIG.pbkdf2Hash,
+      salt: encoder.encode(salt),
+      iterations
+    },
+    keyMaterial,
+    256
+  );
+
+  return toBase64(new Uint8Array(bits));
+}
+
+async function buildSecuredPassword(password) {
+  if (!window.crypto?.subtle) {
+    return null;
+  }
+
+  const passwordSalt = generateSalt();
+  const passwordHash = await derivePasswordHash(password, passwordSalt);
   return {
-    name: metadata.name || user.email?.split('@')[0] || 'Runner',
-    email: user.email || '',
-    level: metadata.level || 'beginner',
-    xp: 0,
-    progressData: {},
-    createdAt: new Date().toISOString()
+    passwordHash,
+    passwordSalt,
+    passwordAlgo: 'pbkdf2-sha256',
+    passwordIterations: AUTH_CONFIG.pbkdf2Iterations
   };
 }
 
-async function checkAuthStatus() {
-  if (!supabaseClient) return false;
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session?.user) return false;
+function persistLoginAttempts() {
+  localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(loginAttempts));
+}
 
-  currentSupabaseSession = session;
-  const uid = session.user.id;
-  profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
-  let profile = profiles[uid];
-  if (!profile) {
-    profile = buildProfileFromSession(session);
-    profiles[uid] = profile;
-    localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
-  }
+function getLoginAttemptInfo(email) {
+  const key = normalizeEmail(email);
+  return loginAttempts[key] || { count: 0, lockUntil: 0 };
+}
 
-  currentUser = profile;
-  users[profile.email] = currentUser;
-  if (typeof currentUser.xp === 'undefined') {
-    currentUser.xp = 0;
-    saveUserData();
+function isLoginLocked(email) {
+  const info = getLoginAttemptInfo(email);
+  if (!info.lockUntil) return false;
+  if (Date.now() >= info.lockUntil) {
+    clearLoginAttempts(email);
+    return false;
   }
-  authContainer.classList.add('hidden');
-  userBar.style.display = 'flex';
-  updateUserInterface();
-  activateWakeLockIfNeeded();
-  setTimeout(() => { if (window.STRAVA) STRAVA.init(); }, 200);
   return true;
 }
+
+function registerFailedLogin(email) {
+  const key = normalizeEmail(email);
+  const info = getLoginAttemptInfo(key);
+  const nextCount = info.count + 1;
+  const shouldLock = nextCount >= AUTH_CONFIG.maxFailedAttempts;
+
+  loginAttempts[key] = {
+    count: shouldLock ? 0 : nextCount,
+    lockUntil: shouldLock ? Date.now() + AUTH_CONFIG.lockoutMs : 0
+  };
+  persistLoginAttempts();
+}
+
+function clearLoginAttempts(email) {
+  const key = normalizeEmail(email);
+  delete loginAttempts[key];
+  persistLoginAttempts();
+}
+
+function getLockRemainingMs(email) {
+  const info = getLoginAttemptInfo(email);
+  return Math.max(0, (info.lockUntil || 0) - Date.now());
+}
+
+function normalizeUsersMap() {
+  const migrated = {};
+  let changed = false;
+
+  Object.entries(users).forEach(([emailKey, userData]) => {
+    const normalized = normalizeEmail(emailKey || userData?.email || '');
+    if (!normalized || migrated[normalized]) return;
+    migrated[normalized] = {
+      ...userData,
+      email: normalized
+    };
+    if (emailKey !== normalized || userData?.email !== normalized) {
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    users = migrated;
+    localStorage.setItem('runningTrainerUsers', JSON.stringify(users));
+  }
+}
+
+async function migrateLegacyPasswordIfNeeded(user, plainPassword) {
+  if (!user || user.passwordHash) return true;
+  if (!user.password || user.password !== plainPassword) return false;
+
+  const securedPassword = await buildSecuredPassword(plainPassword);
+  if (!securedPassword) return true;
+
+  user.passwordHash = securedPassword.passwordHash;
+  user.passwordSalt = securedPassword.passwordSalt;
+  user.passwordAlgo = securedPassword.passwordAlgo;
+  user.passwordIterations = securedPassword.passwordIterations;
+  user.authSchemaVersion = AUTH_CONFIG.schemaVersion;
+  delete user.password;
+  return true;
+}
+
+async function verifyUserPassword(user, plainPassword) {
+  if (!user) return false;
+
+  if (!user.passwordHash || !user.passwordSalt) {
+    return migrateLegacyPasswordIfNeeded(user, plainPassword);
+  }
+
+  const iterations = user.passwordIterations || AUTH_CONFIG.pbkdf2Iterations;
+  const computed = await derivePasswordHash(plainPassword, user.passwordSalt, iterations);
+  return computed === user.passwordHash;
+}
+
+async function loginUser(email, password) {
+  const normalizedEmail = normalizeEmail(email);
+  const user = users[normalizedEmail];
+
+  if (isLoginLocked(normalizedEmail)) {
+    const seconds = Math.ceil(getLockRemainingMs(normalizedEmail) / 1000);
+    showToast(`Demasiados intentos. Prueba de nuevo en ${seconds}s`, 'error');
+    return;
+  }
+  
+  if (!user) {
+    registerFailedLogin(normalizedEmail);
+    showToast('Usuario no encontrado', 'error');
+    return;
+  }
+  
+  const validPassword = await verifyUserPassword(user, password);
+  if (!validPassword) {
+    registerFailedLogin(normalizedEmail);
+    showToast('Contraseña incorrecta', 'error');
+    return;
+  }
+
+  clearLoginAttempts(normalizedEmail);
+  
+  // Establecer usuario actual
+  currentUser = user;
+  localStorage.setItem("currentUser", normalizedEmail);
+  users[normalizedEmail] = currentUser;
+  localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+  
+  // Ocultar auth y mostrar aplicación
+  authContainer.classList.add('hidden');
+  userBar.classList.add("visible");
+  
+  // Actualizar interfaz de usuario
+  updateUserInterface();
+  
+  // Inicializar la aplicación
+  initApp();
+  
+  showToast(`¡Bienvenido/a de nuevo, ${user.name}!`, 'success');
+  activateWakeLockIfNeeded();
+
+  // Inicializar Strava si ya había sesión conectada
+  setTimeout(() => { if (window.STRAVA) STRAVA.init(); }, 200);
+}
+// Verificar si hay una sesión activa al cargar la página
+function checkAuthStatus() {
+  const userEmail = normalizeEmail(localStorage.getItem("currentUser"));
+  
+  if (userEmail && users[userEmail]) {
+    currentUser = users[userEmail];
+    // Migrar usuarios antiguos sin XP
+    if (typeof currentUser.xp === 'undefined') {
+      currentUser.xp = 0;
+      users[userEmail] = currentUser;
+      localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+    }
+    authContainer.classList.add('hidden');
+    userBar.style.display = 'flex';
+    updateUserInterface();
+    activateWakeLockIfNeeded();
+
+    // Restaurar widget de Strava si había sesión activa
+    setTimeout(() => { if (window.STRAVA) STRAVA.init(); }, 200);
+    return true;
+  }
+  
+  return false;
+}
+
+normalizeUsersMap();
 
 // Verificar y aplicar subida de nivel
 function checkLevelUp(nivelAnterior, xpGanado) {
@@ -1125,7 +1300,8 @@ function initApp() {
   // Inicializar datos de progreso si no existen
   if (!currentUser.progressData) {
     currentUser.progressData = {};
-    saveUserData();
+    users[currentUser.email] = currentUser;
+    localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
   }
 
   // Restaurar planes dinámicos si el usuario ya los había generado
@@ -1197,7 +1373,8 @@ function cambiarPlan(tipo) {
       currentUser.progressData[tipo][`semana${weekIndex}`] = Array(planes[tipo][weekIndex].length).fill(false);
     });
     // Guardar los cambios
-    saveUserData();
+    users[currentUser.email] = currentUser;
+    localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
     showToast(`¡Nuevo plan "${nombre}" iniciado!`, "success");
   } else {
     // Sincronizar semanas si el plan cambió de tamaño
@@ -1209,7 +1386,8 @@ function cambiarPlan(tipo) {
       }
     });
     if (updated) {
-      saveUserData();
+      users[currentUser.email] = currentUser;
+      localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
     }
   }
   renderWeeks();
@@ -1362,7 +1540,8 @@ function toggleDayComplete(weekIndex, dayIndex, button, weekButton) {
   }
   
   // Guardar cambios
-  saveUserData();
+  users[currentUser.email] = currentUser;
+  localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
 
   button.textContent = !currentStatus ? "Completado" : "Marcar";
   button.classList.toggle('btn-success', !currentStatus);
