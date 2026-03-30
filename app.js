@@ -421,31 +421,36 @@ function initEventListeners() {
       return;
     }
 
-    const { data, error } = await supabaseClient.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          level
+    try {
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            level
+          }
         }
+      });
+      if (error) {
+        showToast(error.message, 'error');
+        return;
       }
-    });
-    if (error) {
-      showToast(error.message, 'error');
-      return;
-    }
 
-    const uid     = data.user.id;
-    const profile = { name, email, level, xp: 0, progressData: {}, createdAt: new Date().toISOString() };
-    profiles[uid] = profile;
-    localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
+      const uid     = data.user.id;
+      const profile = { name, email, level, xp: 0, progressData: {}, createdAt: new Date().toISOString() };
+      profiles[uid] = profile;
+      localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
 
-    if (data.session) {
-      currentSupabaseSession = data.session;
-      loginUser(data.session, profile);
-    } else {
-      showToast('Revisa tu correo para confirmar la cuenta', 'success');
+      if (data.session) {
+        currentSupabaseSession = data.session;
+        loginUser(data.session, profile);
+      } else {
+        showToast('Revisa tu correo para confirmar la cuenta', 'success');
+      }
+    } catch (err) {
+      console.error('Register error:', err);
+      showToast('Error de conexión: ' + (err.message || 'revisa consola'), 'error');
     }
   });
 
@@ -456,22 +461,27 @@ function initEventListeners() {
     const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      showToast('Correo o contraseña incorrectos', 'error');
-      return;
-    }
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        showToast('Correo o contraseña incorrectos', 'error');
+        return;
+      }
 
-    currentSupabaseSession = data.session;
-    const uid = data.session.user.id;
-    profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
-    let profile = profiles[uid];
-    if (!profile) {
-      profile = buildProfileFromSession(data.session);
-      profiles[uid] = profile;
-      localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
+      currentSupabaseSession = data.session;
+      const uid = data.session.user.id;
+      profiles = JSON.parse(localStorage.getItem(RT_PROFILES_KEY) || '{}');
+      let profile = profiles[uid];
+      if (!profile) {
+        profile = buildProfileFromSession(data.session);
+        profiles[uid] = profile;
+        localStorage.setItem(RT_PROFILES_KEY, JSON.stringify(profiles));
+      }
+      loginUser(data.session, profile);
+    } catch (err) {
+      console.error('Login error:', err);
+      showToast('Error de conexión: ' + (err.message || 'revisa consola'), 'error');
     }
-    loginUser(data.session, profile);
   });
 
   // Cerrar sesión
