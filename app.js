@@ -421,6 +421,7 @@ function initEventListeners() {
       return;
     }
 
+    if (!supabaseClient) { showToast('Error: Supabase no conectado. Recarga la página.', 'error'); return; }
     try {
       const { data, error } = await supabaseClient.auth.signUp({
         email,
@@ -461,6 +462,7 @@ function initEventListeners() {
     const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
 
+    if (!supabaseClient) { showToast('Error: Supabase no conectado. Recarga la página.', 'error'); return; }
     try {
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
@@ -917,6 +919,7 @@ function buildProfileFromSession(session) {
 }
 
 async function checkAuthStatus() {
+  if (!supabaseClient) return false;
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session?.user) return false;
 

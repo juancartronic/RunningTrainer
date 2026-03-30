@@ -10,10 +10,27 @@
 const SUPABASE_URL      = 'https://ldsmrjtmeqvkktidmpus.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Ni7BCc_8RR5wGi_eKgOWTg_1Lee66rR';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false
+let supabaseClient = null;
+try {
+  if (typeof supabase === 'undefined') {
+    throw new Error('Supabase SDK no cargó. Revisa tu conexión a internet.');
   }
-});
+  supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false
+    }
+  });
+  console.log('[Supabase] Cliente inicializado OK');
+} catch (err) {
+  console.error('[Supabase] Error al inicializar:', err);
+  document.addEventListener('DOMContentLoaded', () => {
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.textContent = 'Error Supabase: ' + err.message;
+      toast.className = 'toast error show';
+      setTimeout(() => toast.classList.remove('show'), 8000);
+    }
+  });
+}
