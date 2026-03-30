@@ -7,8 +7,8 @@
 // IMPORTANTE: en el dashboard de Supabase desactiva "Enable email confirmations"
 // (Authentication → Settings → Email Auth) para que los usuarios entren al instante.
 
-const SUPABASE_URL      = 'https://TU-PROYECTO.supabase.co';
-const SUPABASE_ANON_KEY = 'TU-ANON-KEY';
+const SUPABASE_URL      = 'https://ldsmrjtmeqvkktidmpus.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Ni7BCc_8RR5wGi_eKgOWTg_1Lee66rR';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
