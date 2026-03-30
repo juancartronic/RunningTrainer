@@ -2018,20 +2018,85 @@ function extractWorkoutPreset(description) {
   // Para ejercicios de carrera: detectar orden caminar/correr
   const walkingWords = ['caminando', 'caminar', 'caminata'];
   const runningWords = ['corriendo', 'correr', 'fuerte', 'rápid', 'trote', 'ritmo'];
-  
+
   const walkingIndex = Math.min(...walkingWords.map(word => {
     const idx = normalized.indexOf(word);
     return idx === -1 ? Infinity : idx;
   }));
-  
+
   const runningIndex = Math.min(...runningWords.map(word => {
     const idx = normalized.indexOf(word);
     return idx === -1 ? Infinity : idx;
   }));
-  
+
+  // "alternando" → primer tiempo es duración total, calcular reps
+  if (/alternando/.test(normalized) && seconds.length >= 3) {
+    const totalDuration = seconds[0];
+    const exerciseTime = seconds[1];
+    const restTime = seconds[2];
+    const calculatedReps = Math.floor(totalDuration / (exerciseTime + restTime));
+    return {
+      title: cleaned,
+      reps: calculatedReps || 1,
+      exerciseTime,
+      restTime,
+      exerciseLabel,
+      restLabel
+    };
+  }
+
+  // "progresivo/más rápido" sin caminar → carrera continua, sumar tiempos
+  if (/progresivo|más rápido/.test(normalized) && walkingIndex === Infinity) {
+    return {
+      title: cleaned,
+      reps: 1,
+      exerciseTime: seconds.reduce((a, b) => a + b, 0),
+      restTime: 0,
+      exerciseLabel,
+      restLabel
+    };
+  }
+
+  // Caminata sin palabras de correr → bloque continuo (ignora tiempos de fuerza)
+  if (walkingIndex !== Infinity && runningIndex === Infinity) {
+    return {
+      title: cleaned,
+      reps,
+      exerciseTime: seconds[0],
+      restTime: 0,
+      exerciseLabel: 'CAMINAR',
+      restLabel
+    };
+  }
+
+  // 3+ tiempos → buscar descanso por proximidad a palabra clave
+  if (seconds.length > 2) {
+    const restKeywordIdx = normalized.search(/caminando|caminar|caminata|descanso|desc\b/i);
+    if (restKeywordIdx >= 0) {
+      let restIdx = -1;
+      let minDist = Infinity;
+      timeMatches.forEach((match, idx) => {
+        const dist = Math.abs(match.index - restKeywordIdx);
+        if (dist < minDist) {
+          minDist = dist;
+          restIdx = idx;
+        }
+      });
+      if (restIdx >= 0) {
+        const restTime = seconds[restIdx];
+        if (nxTimeMatch) {
+          const nxExerciseTime = parseTimeToSeconds(nxTimeMatch[2], nxTimeMatch[3]);
+          return { title: cleaned, reps, exerciseTime: nxExerciseTime, restTime, exerciseLabel, restLabel };
+        }
+        const exerciseTime = seconds.reduce((sum, s, i) => i !== restIdx ? sum + s : sum, 0);
+        return { title: cleaned, reps, exerciseTime, restTime, exerciseLabel, restLabel };
+      }
+    }
+  }
+
   // Si "caminando" aparece antes que "corriendo", invertir el orden
   const isWalkingFirst = walkingIndex < runningIndex;
-  
+
   if (isWalkingFirst) {
     return {
       title: cleaned,
