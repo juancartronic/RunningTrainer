@@ -4,6 +4,16 @@
 let users = JSON.parse(localStorage.getItem("runningTrainerUsers")) || {};
 let currentUser = null;
 let planActual = "30min";
+const AUTH_CONFIG = {
+  schemaVersion: 2,
+  pbkdf2Iterations: 120000,
+  pbkdf2Hash: 'SHA-256',
+  minPasswordLength: 8,
+  maxFailedAttempts: 5,
+  lockoutMs: 5 * 60 * 1000
+};
+const LOGIN_ATTEMPTS_KEY = 'runningTrainerLoginAttempts';
+let loginAttempts = JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '{}');
 let chart;
 const _savedDarkMode = localStorage.getItem('darkMode');
 let darkMode = _savedDarkMode !== null
@@ -395,24 +405,43 @@ function initEventListeners() {
   renderSoundOptions(soundOptions);
 
   // Registrar nuevo usuario
-  registerForm.addEventListener('submit', (e) => {
+  registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
+    const email = normalizeEmail(document.getElementById('registerEmail').value);
     const password = document.getElementById('registerPassword').value;
     const level = document.getElementById('registerLevel').value;
+
+    if (!isValidEmail(email)) {
+      showToast('Ingresa un correo electronico valido', 'error');
+      return;
+    }
+
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      showToast(passwordValidation.message, 'error');
+      return;
+    }
     
     if (users[email]) {
       showToast('Este correo ya está registrado', 'error');
       return;
     }
+
+    const securedPassword = await buildSecuredPassword(password);
+    const useLegacyPasswordFallback = !securedPassword;
     
     // Crear nuevo usuario
     users[email] = {
       name,
       email,
-      password,
+      passwordHash: securedPassword?.passwordHash,
+      passwordSalt: securedPassword?.passwordSalt,
+      passwordAlgo: securedPassword?.passwordAlgo,
+      passwordIterations: securedPassword?.passwordIterations,
+      authSchemaVersion: securedPassword ? AUTH_CONFIG.schemaVersion : 1,
+      ...(useLegacyPasswordFallback ? { password } : {}),
       level,
       xp: 0,
       progressData: {},
@@ -421,19 +450,23 @@ function initEventListeners() {
     
     // Guardar en localStorage
     localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+
+    if (useLegacyPasswordFallback) {
+      showToast('Seguridad limitada: el navegador no soporta cifrado moderno', 'error');
+    }
     
     // Iniciar sesión automáticamente
-    loginUser(email, password);
+    await loginUser(email, password);
   });
 
   // Iniciar sesión
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const email = document.getElementById('loginEmail').value;
+    const email = normalizeEmail(document.getElementById('loginEmail').value);
     const password = document.getElementById('loginPassword').value;
     
-    loginUser(email, password);
+    await loginUser(email, password);
   });
 
   // Cerrar sesión
@@ -843,22 +876,208 @@ async function setSoundMode(nextMode, soundOptions, showFeedback = false) {
   }
 }
 
-function loginUser(email, password) {
-  const user = users[email];
+function normalizeEmail(email = '') {
+  return String(email).trim().toLowerCase();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePasswordStrength(password = '') {
+  if (password.length < AUTH_CONFIG.minPasswordLength) {
+    return {
+      valid: false,
+      message: `La contrasena debe tener al menos ${AUTH_CONFIG.minPasswordLength} caracteres`
+    };
+  }
+
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    return {
+      valid: false,
+      message: 'La contrasena debe incluir letras y numeros'
+    };
+  }
+
+  return { valid: true, message: '' };
+}
+
+function toBase64(bytes) {
+  let binary = '';
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+}
+
+function generateSalt(size = 16) {
+  const salt = new Uint8Array(size);
+  crypto.getRandomValues(salt);
+  return toBase64(salt);
+}
+
+async function derivePasswordHash(password, salt, iterations = AUTH_CONFIG.pbkdf2Iterations) {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      hash: AUTH_CONFIG.pbkdf2Hash,
+      salt: encoder.encode(salt),
+      iterations
+    },
+    keyMaterial,
+    256
+  );
+
+  return toBase64(new Uint8Array(bits));
+}
+
+async function buildSecuredPassword(password) {
+  if (!window.crypto?.subtle) {
+    return null;
+  }
+
+  const passwordSalt = generateSalt();
+  const passwordHash = await derivePasswordHash(password, passwordSalt);
+  return {
+    passwordHash,
+    passwordSalt,
+    passwordAlgo: 'pbkdf2-sha256',
+    passwordIterations: AUTH_CONFIG.pbkdf2Iterations
+  };
+}
+
+function persistLoginAttempts() {
+  localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(loginAttempts));
+}
+
+function getLoginAttemptInfo(email) {
+  const key = normalizeEmail(email);
+  return loginAttempts[key] || { count: 0, lockUntil: 0 };
+}
+
+function isLoginLocked(email) {
+  const info = getLoginAttemptInfo(email);
+  if (!info.lockUntil) return false;
+  if (Date.now() >= info.lockUntil) {
+    clearLoginAttempts(email);
+    return false;
+  }
+  return true;
+}
+
+function registerFailedLogin(email) {
+  const key = normalizeEmail(email);
+  const info = getLoginAttemptInfo(key);
+  const nextCount = info.count + 1;
+  const shouldLock = nextCount >= AUTH_CONFIG.maxFailedAttempts;
+
+  loginAttempts[key] = {
+    count: shouldLock ? 0 : nextCount,
+    lockUntil: shouldLock ? Date.now() + AUTH_CONFIG.lockoutMs : 0
+  };
+  persistLoginAttempts();
+}
+
+function clearLoginAttempts(email) {
+  const key = normalizeEmail(email);
+  delete loginAttempts[key];
+  persistLoginAttempts();
+}
+
+function getLockRemainingMs(email) {
+  const info = getLoginAttemptInfo(email);
+  return Math.max(0, (info.lockUntil || 0) - Date.now());
+}
+
+function normalizeUsersMap() {
+  const migrated = {};
+  let changed = false;
+
+  Object.entries(users).forEach(([emailKey, userData]) => {
+    const normalized = normalizeEmail(emailKey || userData?.email || '');
+    if (!normalized || migrated[normalized]) return;
+    migrated[normalized] = {
+      ...userData,
+      email: normalized
+    };
+    if (emailKey !== normalized || userData?.email !== normalized) {
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    users = migrated;
+    localStorage.setItem('runningTrainerUsers', JSON.stringify(users));
+  }
+}
+
+async function migrateLegacyPasswordIfNeeded(user, plainPassword) {
+  if (!user || user.passwordHash) return true;
+  if (!user.password || user.password !== plainPassword) return false;
+
+  const securedPassword = await buildSecuredPassword(plainPassword);
+  if (!securedPassword) return true;
+
+  user.passwordHash = securedPassword.passwordHash;
+  user.passwordSalt = securedPassword.passwordSalt;
+  user.passwordAlgo = securedPassword.passwordAlgo;
+  user.passwordIterations = securedPassword.passwordIterations;
+  user.authSchemaVersion = AUTH_CONFIG.schemaVersion;
+  delete user.password;
+  return true;
+}
+
+async function verifyUserPassword(user, plainPassword) {
+  if (!user) return false;
+
+  if (!user.passwordHash || !user.passwordSalt) {
+    return migrateLegacyPasswordIfNeeded(user, plainPassword);
+  }
+
+  const iterations = user.passwordIterations || AUTH_CONFIG.pbkdf2Iterations;
+  const computed = await derivePasswordHash(plainPassword, user.passwordSalt, iterations);
+  return computed === user.passwordHash;
+}
+
+async function loginUser(email, password) {
+  const normalizedEmail = normalizeEmail(email);
+  const user = users[normalizedEmail];
+
+  if (isLoginLocked(normalizedEmail)) {
+    const seconds = Math.ceil(getLockRemainingMs(normalizedEmail) / 1000);
+    showToast(`Demasiados intentos. Prueba de nuevo en ${seconds}s`, 'error');
+    return;
+  }
   
   if (!user) {
+    registerFailedLogin(normalizedEmail);
     showToast('Usuario no encontrado', 'error');
     return;
   }
   
-  if (user.password !== password) {
+  const validPassword = await verifyUserPassword(user, password);
+  if (!validPassword) {
+    registerFailedLogin(normalizedEmail);
     showToast('Contraseña incorrecta', 'error');
     return;
   }
+
+  clearLoginAttempts(normalizedEmail);
   
   // Establecer usuario actual
   currentUser = user;
-  localStorage.setItem("currentUser", email);
+  localStorage.setItem("currentUser", normalizedEmail);
+  users[normalizedEmail] = currentUser;
+  localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
   
   // Ocultar auth y mostrar aplicación
   authContainer.classList.add('hidden');
@@ -878,7 +1097,7 @@ function loginUser(email, password) {
 }
 // Verificar si hay una sesión activa al cargar la página
 function checkAuthStatus() {
-  const userEmail = localStorage.getItem("currentUser");
+  const userEmail = normalizeEmail(localStorage.getItem("currentUser"));
   
   if (userEmail && users[userEmail]) {
     currentUser = users[userEmail];
@@ -900,6 +1119,8 @@ function checkAuthStatus() {
   
   return false;
 }
+
+normalizeUsersMap();
 
 // Verificar y aplicar subida de nivel
 function checkLevelUp(nivelAnterior, xpGanado) {

@@ -4,12 +4,13 @@ Este documento describe la estructura de datos utilizada en RunningTrainer para 
 
 ## 📦 localStorage Keys
 
-La aplicación utiliza 2 claves principales en localStorage:
+La aplicación utiliza 3 claves principales en localStorage:
 
 ```javascript
 {
   "runningTrainerUsers": {...},  // Objeto con todos los usuarios
-  "currentUser": "email@example.com"  // Email del usuario actualmente logueado
+  "currentUser": "email@example.com", // Email del usuario actualmente logueado
+  "runningTrainerLoginAttempts": {...} // Control de intentos fallidos y bloqueo temporal
 }
 ```
 
@@ -26,7 +27,11 @@ Objeto que contiene todos los usuarios registrados, indexados por email:
   "juan@example.com": {
     name: String,           // Nombre completo del usuario
     email: String,          // Email (actúa como ID único)
-    password: String,       // Contraseña (⚠️ almacenada en texto plano - solo para demo)
+    passwordHash: String,   // Hash PBKDF2-SHA256 de la contraseña
+    passwordSalt: String,   // Salt aleatorio en base64
+    passwordAlgo: String,   // Algoritmo usado: "pbkdf2-sha256"
+    passwordIterations: Number, // Iteraciones de PBKDF2
+    authSchemaVersion: Number, // Version del esquema de autenticación
     level: String,          // Nivel: "beginner" | "intermediate" | "advanced" | "expert"
     xp: Number,            // Puntos de experiencia acumulados
     pace5k: Number,        // (Opcional) Mejor tiempo 5K en segundos para plan 20K
@@ -46,7 +51,11 @@ Objeto que contiene todos los usuarios registrados, indexados por email:
   "juan.perez@gmail.com": {
     name: "Juan Pérez",
     email: "juan.perez@gmail.com",
-    password: "mipassword123",
+    passwordHash: "<HASH_BASE64>",
+    passwordSalt: "<SALT_BASE64>",
+    passwordAlgo: "pbkdf2-sha256",
+    passwordIterations: 120000,
+    authSchemaVersion: 2,
     level: "intermediate",
     xp: 475,
     pace5k: 1530,
