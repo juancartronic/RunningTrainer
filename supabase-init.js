@@ -8,7 +8,7 @@
 // (Authentication → Settings → Email Auth) para que los usuarios entren al instante.
 
 const SUPABASE_URL      = 'https://ldsmrjtmeqvkktidmpus.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Ni7BCc_8RR5wGi_eKgOWTg_1Lee66rR';
+const SUPABASE_ANON_KEY = 'sb_publishable_uPaXJAiMjvsqj3xiP1ku1w_0_kVunZ5';
 
 let supabaseClient = null;
 try {
