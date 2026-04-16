@@ -476,7 +476,7 @@ function initEventListeners() {
     disableWakeLock();
     localStorage.removeItem("currentUser");
     
-    userBar.classList.add("visible");
+    userBar.classList.remove("visible");
 
     authContainer.classList.remove('hidden');
     
@@ -1108,8 +1108,9 @@ function checkAuthStatus() {
       localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
     }
     authContainer.classList.add('hidden');
-    userBar.style.display = 'flex';
+    userBar.classList.add('visible');
     updateUserInterface();
+    initApp();
     activateWakeLockIfNeeded();
 
     // Restaurar widget de Strava si había sesión activa
