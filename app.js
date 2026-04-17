@@ -372,6 +372,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Inicializar event listeners
 function initEventListeners() {
+  // Toggle visibilidad de contraseña
+  document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wrapper = btn.closest('.password-wrapper');
+      const input = wrapper.querySelector('input');
+      const eyeIcon = btn.querySelector('.eye-icon');
+      const eyeOffIcon = btn.querySelector('.eye-off-icon');
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      eyeIcon.style.display = isHidden ? 'none' : '';
+      eyeOffIcon.style.display = isHidden ? '' : 'none';
+    });
+  });
+
   // Cambiar entre pestañas de login/registro
   loginTab.addEventListener('click', () => {
     loginTab.classList.add('active');
@@ -429,34 +443,50 @@ function initEventListeners() {
       return;
     }
 
-    const securedPassword = await buildSecuredPassword(password);
-    const useLegacyPasswordFallback = !securedPassword;
-    
-    // Crear nuevo usuario
-    users[email] = {
-      name,
-      email,
-      passwordHash: securedPassword?.passwordHash,
-      passwordSalt: securedPassword?.passwordSalt,
-      passwordAlgo: securedPassword?.passwordAlgo,
-      passwordIterations: securedPassword?.passwordIterations,
-      authSchemaVersion: securedPassword ? AUTH_CONFIG.schemaVersion : 1,
-      ...(useLegacyPasswordFallback ? { password } : {}),
-      level,
-      xp: 0,
-      progressData: {},
-      createdAt: new Date().toISOString()
-    };
-    
-    // Guardar en localStorage
-    localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+    try {
+      const securedPassword = await buildSecuredPassword(password);
+      const useLegacyPasswordFallback = !securedPassword;
+      
+      // Crear nuevo usuario
+      const newUser = {
+        name,
+        email,
+        passwordHash: securedPassword?.passwordHash,
+        passwordSalt: securedPassword?.passwordSalt,
+        passwordAlgo: securedPassword?.passwordAlgo,
+        passwordIterations: securedPassword?.passwordIterations,
+        authSchemaVersion: securedPassword ? AUTH_CONFIG.schemaVersion : 1,
+        ...(useLegacyPasswordFallback ? { password } : {}),
+        level,
+        xp: 0,
+        progressData: {},
+        createdAt: new Date().toISOString()
+      };
 
-    if (useLegacyPasswordFallback) {
-      showToast('Seguridad limitada: el navegador no soporta cifrado moderno', 'error');
+      users[email] = newUser;
+      localStorage.setItem("runningTrainerUsers", JSON.stringify(users));
+
+      if (useLegacyPasswordFallback) {
+        showToast('Seguridad limitada: el navegador no soporta cifrado moderno', 'error');
+      }
+      
+      // Iniciar sesión directamente sin re-verificar contraseña
+      currentUser = newUser;
+      localStorage.setItem("currentUser", email);
+      
+      authContainer.classList.add('hidden');
+      userBar.classList.add("visible");
+      
+      updateUserInterface();
+      initApp();
+      
+      showToast(`¡Bienvenido/a, ${name}! Tu cuenta ha sido creada`, 'success');
+      activateWakeLockIfNeeded();
+      setTimeout(() => { if (window.STRAVA) STRAVA.init(); }, 200);
+    } catch (err) {
+      console.error('Error durante el registro:', err);
+      showToast('Error al crear la cuenta. Inténtalo de nuevo.', 'error');
     }
-    
-    // Iniciar sesión automáticamente
-    await loginUser(email, password);
   });
 
   // Iniciar sesión

@@ -106,6 +106,42 @@ body.dark-mode {
   font-size: 1rem;
 }
 
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(calc(-50% - 0.5rem));
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: #64748b;
+}
+
+.password-hint {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: -0.5rem 0 1rem;
+  text-align: left;
+}
+
 .auth-form input:focus {
   outline: none;
   border-color: var(--primary);
